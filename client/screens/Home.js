@@ -1,13 +1,22 @@
 import { View, Text, SafeAreaView, TextInput, ScrollView } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { StatusBar } from 'expo-status-bar'
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import Categories from '../components/categories';
-import { featured } from '../constants';
 import FeaturedRow from '../components/featuredRow';
+import { getFeaturedEstablishment } from '../api';
 
 export default function Home() {
+
+  const [featuredEstablishment, setFeaturedEstablishment] = useState([])
+
+  useEffect(() => {
+    getFeaturedEstablishment().then(data => {
+      setFeaturedEstablishment(data)
+    })
+  }, [])
+
   return (
     <SafeAreaView className="bg-white pt-12 ">
       <StatusBar barStyle="dark-content" />
@@ -45,13 +54,13 @@ export default function Home() {
         {/*Recursos*/}
         <View className="mt-5">
           {
-            [featured, featured, featured].map((item, index) => {
+            featuredEstablishment.map((item, index) => {
               return (
                 <FeaturedRow
                   key={index}
-                  title={item.title}
-                  restaurants={item.restaurants}
-                  description={item.description}
+                  title={item.name}
+                  restaurants={item.estabelecimento}
+                  description={item.descricao}
                 />
               )
             })

@@ -4,17 +4,20 @@ import { themeColors } from '../theme'
 import * as Icon from "react-native-feather";
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, selectCartItemsById, removeFromCart } from '../slices/cartSlice';
+import { urlFor } from '../sanity';
+import { createSelector } from 'reselect';
 
 export default function DishRow({ item }) {
     const dispatch = useDispatch()
-    const totalItems = useSelector(state => selectCartItemsById(state, item.id))
+    
+    const totalItems = useSelector(state => selectCartItemsById(state, item._id))
 
     const handleIcrease = () => {
         dispatch(addToCart({ ...item }))
     }
 
     const handleDecrease = () => {
-        dispatch(removeFromCart({ id: item.id }))
+        dispatch(removeFromCart({ id: item._id }))
     }
 
     return (
@@ -34,7 +37,7 @@ export default function DishRow({ item }) {
         >
             <Image className="rounded-3xl"
                 style={{ height: 100, width: 100 }}
-                source={item.image} />
+                source={{uri: urlFor(item.image).url()}} />
             <View className="flex flex-1 space-y-3">
                 <View className="pl-3">
                     <Text className="text-xl">
@@ -46,7 +49,7 @@ export default function DishRow({ item }) {
                 </View>
                 <View className="flex-row justify-between pl-3 items-center">
                     <Text className="text-gray-700 font-bold text-lg">
-                        R${item.price}
+                        R${item.valor}
                     </Text>
                     <View className="flex-row items-center">
                         <TouchableOpacity

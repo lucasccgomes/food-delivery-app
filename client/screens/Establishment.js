@@ -7,6 +7,7 @@ import DishRow from '../components/dishRow';
 import CartIcon from '../components/cartIcon';
 import { useDispatch } from 'react-redux';
 import { setEstablishment } from '../slices/establishmentSlice';
+import { urlFor } from '../sanity';
 
 export default function Establishment() {
   const { params } = useRoute();
@@ -15,10 +16,10 @@ export default function Establishment() {
   const dispatch = useDispatch();
 
 
-  //console.log('Restaurant: ', item)
+//console.log('Restaurant: ', item)
 
   useEffect(() => {
-    if(item && item.id){
+    if(item && item._id){
       dispatch(setEstablishment({...item}))
     }
   },[])
@@ -29,7 +30,7 @@ export default function Establishment() {
       <StatusBar style="light" />
       <ScrollView>
         <View className="relative">
-          <Image className="w-full h-72" source={item.image} />
+          <Image className="w-full h-72" source={{uri: urlFor(item.image).url()}} />
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             className="absolute top-14 left-4 bg-gray-50 p-2 rounded-full shadow"
@@ -52,19 +53,19 @@ export default function Establishment() {
               <View className="flex-row items-center space-x-1">
                 <Image source={require('../assets/images/fullStar.png')} className="h-4 w-4" />
                 <Text className="text-green-700">
-                  {item.stars}
+                  {item.avaliacao}
                 </Text>
                 <Text className="text-gray-700">
-                  ({item.reviews} Vendas) .
+                  ({item.avaliacoes} Vendas) .
                   <Text className="font-semibold text-xs">
-                    {item.category}
+                    {item?.tipo?.name}
                   </Text>
                 </Text>
               </View>
 
               <View className="flex-row items-center space-x-1">
                 <Icon.MapPin color="gray" width="15" height="15" />
-                <Text className="text-gray-700 text-xs">Sagres. {item.address}</Text>
+                <Text className="text-gray-700 text-xs">Sagres. {item.endereco}</Text>
               </View>
             </View>
             <Text className="text-gray-500 mt-2">
@@ -79,7 +80,7 @@ export default function Establishment() {
 
           {/* Sabores */}
           {
-            item.dishes.map((dish, index) => <DishRow item={{ ...dish }} key={index} />)
+            item.produtos.map((produto, index) => <DishRow item={{ ...produto }} key={index} />)
           }
         </View>
       </ScrollView>

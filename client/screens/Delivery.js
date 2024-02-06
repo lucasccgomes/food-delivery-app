@@ -1,17 +1,23 @@
-import { View, Text, Image, TouchableOpacityBase, TouchableOpacity } from 'react-native'
+import { View, Text, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { featured } from '../constants'
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import { themeColors } from '../theme';
 import * as Icon from "react-native-feather";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectEstablishment } from '../slices/establishmentSlice';
+import { emptyCart } from '../slices/cartSlice';
 
 export default function Delivery() {
 
     const establishment = useSelector(selectEstablishment)
     const navigation = useNavigation();
+    const dispatch = useDispatch();
+
+    const cancelOrder = () => {
+        navigation.navigate('Home')
+        dispatch(emptyCart())
+    }
 
     return (
         <View className="flex-1">
@@ -74,12 +80,12 @@ export default function Delivery() {
                     </View>
                     <View className="flex-row items-center space-x-3 mr-3">
                         <TouchableOpacity className="bg-white p-2 rounded-full">
-                            <Icon.Phone fill={themeColors.bgColor(1)} stroke={themeColors.bgColor(1)} strokeWidth={1}/>
+                            <Icon.Phone fill={themeColors.bgColor(1)} stroke={themeColors.bgColor(1)} strokeWidth={1} />
                         </TouchableOpacity>
-                        <TouchableOpacity 
-                        onPress={() => navigation.navigate('Home')}
-                        className="bg-white p-2 rounded-full">
-                            <Icon.X stroke={'red'} strokeWidth={4}/>
+                        <TouchableOpacity
+                            onPress={cancelOrder}
+                            className="bg-white p-2 rounded-full">
+                            <Icon.X stroke={'red'} strokeWidth={4} />
                         </TouchableOpacity>
                     </View>
                 </View>

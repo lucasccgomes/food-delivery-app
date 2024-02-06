@@ -4,10 +4,12 @@ import AppStyles from '../shadow';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
+import { urlFor } from '../sanity'
 
 export default function RestaurantCard({ item }) {
 
     const navigation = useNavigation();
+    console.log('item', item);
 
     return (
         <TouchableNativeFeedback
@@ -27,7 +29,7 @@ export default function RestaurantCard({ item }) {
                 }}
             >
 
-                <Image className="h-36 w-64 rounded-t-3xl" source={item.image} />
+                <Image className="h-36 w-64 rounded-t-3xl" source={{uri: urlFor(item.image).url()}} />
 
                 <View className="px-3 pb-4 space-y-2">
                     <Text className="text-lg font-bold pt-2">
@@ -37,18 +39,18 @@ export default function RestaurantCard({ item }) {
                     <View className="flex-row items-center space-x-1">
                         <Image source={require('../assets/images/fullStar.png')} className="h-4 w-4" />
                         <Text className="text-green-700">
-                            {item.stars}
+                            {item.avaliacao}
                         </Text>
                         <Text className="text-gray-700">
-                            ({item.reviews} Vendas) . <Text className="font-semibold">
-                                {item.category}
+                            ({item.avaliacoes} Vendas) . <Text className="font-semibold">
+                                {item?.tipo?.name}
                             </Text>
                         </Text>
                     </View>
 
                     <View className="flex-row items-center space-x-1">
                         <Icon.MapPin color="gray" width="15" height="15" />
-                        <Text className="text-gray-700 text-xs">Sagres. {item.address}</Text>
+                        <Text className="text-gray-700 text-xs">Sagres. {item.endereco}</Text>
                     </View>
 
                 </View>

@@ -4,9 +4,10 @@ import * as Icon from "react-native-feather";
 import { featured } from '../constants'
 import { themeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectEstablishment } from '../slices/establishmentSlice';
-import { selectCartItems, selectCartTotal } from '../slices/cartSlice';
+import { removeFromCart, selectCartItems, selectCartTotal } from '../slices/cartSlice';
+import { urlFor } from '../sanity';
 
 export default function Cart() {
     const establishment = useSelector(selectEstablishment)
@@ -14,7 +15,8 @@ export default function Cart() {
     const cartItems = useSelector(selectCartItems)
     const cartTotal = useSelector(selectCartTotal)
     const [grupedItems, setGroupedItems] = useState({})
-    const 
+    const dispatch = useDispatch()
+    const deliveryFee = 2;
 
     useEffect(() => {
         const items = cartItems.reduce((group, item) => {
@@ -126,15 +128,16 @@ export default function Cart() {
                                     {items.length} x
                                 </Text>
                                 <Image className="h-14 w-14 rounded-full"
-                                    source={dish.image}
+                                    source={{uri: urlFor(dish.image).url()}}
                                 />
                                 <Text className="flex-1 font-bold text-gray-700">
                                     {dish.name}
                                 </Text>
                                 <Text className="font-semibold text-base">
-                                    R${dish.price}
+                                    R${dish.valor}
                                 </Text>
                                 <TouchableOpacity
+                                onPress={() => dispatch(removeFromCart({id: dish.id}))}
                                     style={{ backgroundColor: themeColors.bgColor(1), borderRadius: 50, padding: 2 }}
                                 >
                                     <Icon.Minus stroke="white" strokeWidth={2} height={20} width={20} />
@@ -153,17 +156,17 @@ export default function Cart() {
 
                 <View className="flex-row justify-between">
                     <Text className="text-gray-700">Subtotal</Text>
-                    <Text className="text-gray-700">R$20</Text>
+                    <Text className="text-gray-700">R${cartTotal}</Text>
                 </View>
 
                 <View className=" flex-row justify-between">
                     <Text className="text-gray-700">Taxa de entrega</Text>
-                    <Text className="text-gray-700">R$0,25</Text>
+                    <Text className="text-gray-700">R${deliveryFee}</Text>
                 </View>
 
                 <View className="flex-row justify-between">
                     <Text className="text-gray-700 font-extrabold">Total do pedido</Text>
-                    <Text className="text-gray-700 font-extrabold">R$20,25</Text>
+                    <Text className="text-gray-700 font-extrabold">R${deliveryFee + cartTotal}</Text>
                 </View>
                 <View>
                     <TouchableOpacity
