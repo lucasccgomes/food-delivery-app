@@ -9,22 +9,33 @@ import { selectEstablishment } from '../slices/establishmentSlice';
 import { emptyCart } from '../slices/cartSlice';
 
 export default function Delivery() {
-
+    console.log('Renderizando o componente Delivery');
+    
+    
+    //então o problema esta deste ponto para baixo coloque console.log para ajudar a achar o erro
     const establishment = useSelector(selectEstablishment)
+    console.log('Establishment:', establishment);
+
     const navigation = useNavigation();
     const dispatch = useDispatch();
 
     const cancelOrder = () => {
-        navigation.navigate('Home')
-        dispatch(emptyCart())
+        console.log('Cancelando pedido');
+        navigation.navigate('Home');
+        dispatch(emptyCart());
     }
+
+    console.log('Coordenadas do estabelecimento:', establishment.lat, establishment.lnt);
 
     return (
         <View className="flex-1">
             <MapView
+
+                onMapReady={() => console.log('Mapa carregado')}
+                onError={(e) => console.log('Erro ao carregar o mapa', e)}
                 initialRegion={{
                     latitude: establishment.lat,
-                    longitude: establishment.lng,
+                    longitude: establishment.lnt,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                 }}
@@ -34,7 +45,7 @@ export default function Delivery() {
                 <Marker
                     coordinate={{
                         latitude: establishment.lat,
-                        longitude: establishment.lng
+                        longitude: establishment.lnt
                     }}
                     title={establishment.name}
                     description={establishment.description}

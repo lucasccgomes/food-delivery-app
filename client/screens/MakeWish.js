@@ -7,10 +7,13 @@ export default function FazerPedido() {
     const navigation = useNavigation();
 
     useEffect(() => {
-        setTimeout(() => {
-            navigation.navigate('Delivery')
-        }, 3000)
-    }, [])
+        const timer = setTimeout(() => {
+          console.log('Navegando para Delivery');
+          navigation.navigate('Delivery');
+        }, 3000);
+      
+        return () => clearTimeout(timer);
+      }, []);
 
     return (
         <View className="flex-1 bg-white justify-center items-center">

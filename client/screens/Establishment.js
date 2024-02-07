@@ -33,7 +33,7 @@ export default function Establishment() {
           <Image className="w-full h-72" source={{uri: urlFor(item.image).url()}} />
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="absolute top-14 left-4 bg-gray-50 p-2 rounded-full shadow"
+            className="absolute top-14 left-8 bg-gray-50 p-3 rounded-full shadow"
           >
             <Icon.ArrowLeft strokeWidth={3} stroke={themeColors.bgColor(1)} />
           </TouchableOpacity>
