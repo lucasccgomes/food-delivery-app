@@ -52,7 +52,16 @@ const [initializing, setInitializing] = useState(true);
 
 if (!user) {
   return (
-    <View classname="flex items-center justify-center">
+    <View
+    style={{
+        backgroundColor: '#FF69B4', 
+        width: '100%', 
+        height: '100%',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }}
+    >
   <GoogleSigninButton
   onPress={onGoogleButtonPress}
   />
