@@ -7,7 +7,7 @@ import DishRow from '../components/dishRow';
 import CartIcon from '../components/cartIcon';
 import { useDispatch } from 'react-redux';
 import { setEstablishment } from '../slices/establishmentSlice';
-import { urlFor } from '../sanity';
+import { urlFor } from '../services/sanity/sanity';
 
 export default function Establishment() {
   const { params } = useRoute();

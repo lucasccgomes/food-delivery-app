@@ -4,7 +4,7 @@ import { themeColors } from '../theme'
 import * as Icon from "react-native-feather";
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, selectCartItemsById, removeFromCart } from '../slices/cartSlice';
-import { urlFor } from '../sanity';
+import { urlFor } from '../services/sanity/sanity';
 
 
 

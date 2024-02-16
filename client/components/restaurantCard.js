@@ -4,7 +4,7 @@ import AppStyles from '../shadow';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
-import { urlFor } from '../sanity'
+import { urlFor } from '../services/sanity/sanity';
 
 export default function RestaurantCard({ item }) {
 

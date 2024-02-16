@@ -78,7 +78,7 @@ export default function Delivery() {
                     >
                         <Image
                             className="h-16 w-16 rounded-full"
-                            source={require('../assets/images/deliveryGuy.png')}
+                            source={require('../assets/images/deliveryLucas.jpeg')}
                         />
                     </View>
                     <View className="flex-1 ml-3 ">

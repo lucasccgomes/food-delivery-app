@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectEstablishment } from '../slices/establishmentSlice';
 import { removeFromCart, selectCartItems, selectCartTotal } from '../slices/cartSlice';
-import { urlFor } from '../sanity';
+import { urlFor } from '../services/sanity/sanity';
 
 export default function Cart() {
     const establishment = useSelector(selectEstablishment)

@@ -5,7 +5,7 @@ import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import Categories from '../components/categories';
 import FeaturedRow from '../components/featuredRow';
-import { getFeaturedEstablishment } from '../api';
+import { getFeaturedEstablishment } from '../services/sanity/api';
 
 export default function Home() {
 

@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { getCategories } from '../api'
-import { urlFor } from '../sanity'
+import { getCategories } from '../services/sanity/api'
+import { urlFor } from '../services/sanity/sanity';
 
 export default function Categories() {
 
