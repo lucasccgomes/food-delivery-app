@@ -9,72 +9,41 @@ const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
-
-
-const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState();
-
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
 
   GoogleSignin.configure({
     webClientId: '259606439469-qunge51ehl01u8t3rosvhgh7fdgg3ujl.apps.googleusercontent.com',
   });
 
-   // Handle user state changes
-   function onAuthStateChanged(user) {
-    if (user) {
-        console.log("UserID:", user.uid);
-        setUser({ uid: user.uid, ...user });
-      } else {
-        setUser(null);
-      }
-  if (initializing) setInitializing(false);
-}
+  // Handle user state changes
+  function onAuthStateChanged(user) {
+    setUser(user ? user.uid : null);
+    if (initializing) setInitializing(false);
+
+    console.log("ID do Usuario-(UserContext):", user.uid);
+  }
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
+    return subscriber; // Desinscreve-se ao desmontar
   }, []);
 
   const onGoogleButtonPress = async () => {
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const { idToken } = await GoogleSignin.signIn();
     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-   const user_sign_in = auth().signInWithCredential(googleCredential);
-   user_sign_in.then((user) => {
-
-   })
-   .catch((error) =>{
-    console.log(error)
-   })
-  }
+    return auth().signInWithCredential(googleCredential);
+  };
 
   if (initializing) return null;
 
-if (!user) {
-  return (
-    <View
-    style={{
-        backgroundColor: '#FF69B4', 
-        width: '100%', 
-        height: '100%',
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    }}
-    >
-  <GoogleSigninButton
-  onPress={onGoogleButtonPress}
-  />
+  return !user ? (
+    <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+      <GoogleSigninButton onPress={onGoogleButtonPress} />
     </View>
-  )
-}
-
-  return (
+  ) : (
     <UserContext.Provider value={{ user, setUser }}>
       {children}
     </UserContext.Provider>
   );
 };
-
-
-

@@ -3,22 +3,27 @@ import React from 'react'
 import { themeColors } from '../theme'
 import * as Icon from "react-native-feather";
 import { useDispatch, useSelector } from 'react-redux';
-import { addToCart, selectCartItemsById, removeFromCart } from '../slices/cartSlice';
+import { addToCart, removeFromCart, selectCartItemsById } from '../slices/cartSlice';
 import { urlFor } from '../services/sanity/sanity';
+import { useUser } from '../context/UserContext'; // Importe o hook useUser
 
+export default function DishRow({ item, userId }) {
 
+    console.log("UserId from props in DishRow:", userId);
 
-export default function DishRow({ item }) {
     const dispatch = useDispatch()
-    
     const totalItems = useSelector(state => selectCartItemsById(state, item._id))
+    const { user } = useUser(); // Obtenha o usuário do contexto
 
-    const handleIcrease = () => {
-        dispatch(addToCart({ ...item }))
+    const { userId: userIdFromContext } = useUser();
+    console.log("UserId from context in DishRow:", userIdFromContext);
+
+    const handleIncrease = () => {
+        dispatch(addToCart({ userId: userId, item: item }));
     }
 
     const handleDecrease = () => {
-        dispatch(removeFromCart({ id: item._id }))
+        dispatch(removeFromCart({ userId: userId, itemId: item._id }));
     }
 
     return (
@@ -38,7 +43,7 @@ export default function DishRow({ item }) {
         >
             <Image className="rounded-3xl"
                 style={{ height: 100, width: 100 }}
-                source={{uri: urlFor(item.image).url()}} />
+                source={{ uri: urlFor(item.image).url() }} />
             <View className="flex flex-1 space-y-3">
                 <View className="pl-3">
                     <Text className="text-xl">
@@ -65,7 +70,7 @@ export default function DishRow({ item }) {
                             {totalItems.length}
                         </Text>
                         <TouchableOpacity
-                            onPress={handleIcrease}
+                            onPress={handleIncrease}
                             className="p-1 rounded-full"
                             style={{ backgroundColor: themeColors.bgColor(1) }}
                         >

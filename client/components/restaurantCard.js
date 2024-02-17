@@ -9,7 +9,7 @@ import { urlFor } from '../services/sanity/sanity';
 export default function RestaurantCard({ item }) {
 
     const navigation = useNavigation();
-    console.log('item', item);
+    //console.log('item', item);
 
     return (
         <TouchableNativeFeedback

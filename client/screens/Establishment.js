@@ -5,7 +5,7 @@ import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import DishRow from '../components/dishRow';
 import CartIcon from '../components/cartIcon';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setEstablishment } from '../slices/establishmentSlice';
 import { urlFor } from '../services/sanity/sanity';
 
@@ -14,15 +14,14 @@ export default function Establishment() {
   const navigation = useNavigation();
   let item = params;
   const dispatch = useDispatch();
-
-
-//console.log('Restaurant: ', item)
+  const userId = useSelector(state => state.cart.userId);
 
   useEffect(() => {
-    if(item && item._id){
-      dispatch(setEstablishment({...item}))
+    if (item && item._id) {
+      dispatch(setEstablishment({ ...item }));
     }
-  },[])
+  }, []);
+  console.log("UserId passed to DishRow:", userId);
 
   return (
     <View>
@@ -30,7 +29,7 @@ export default function Establishment() {
       <StatusBar style="light" />
       <ScrollView>
         <View className="relative">
-          <Image className="w-full h-72" source={{uri: urlFor(item.image).url()}} />
+          <Image className="w-full h-72" source={{ uri: urlFor(item.image).url() }} />
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             className="absolute top-14 left-8 bg-gray-50 p-3 rounded-full shadow"
@@ -80,7 +79,7 @@ export default function Establishment() {
 
           {/* Sabores */}
           {
-            item.produtos.map((produto, index) => <DishRow item={{ ...produto }} key={index} />)
+            item.produtos.map((produto, index) => <DishRow item={{ ...produto }} userId={userId} key={index} />)
           }
         </View>
       </ScrollView>
