@@ -1,29 +1,94 @@
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, Image, ScrollView, Modal, Button } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectEstablishment } from '../slices/establishmentSlice';
-import { removeFromCart, selectCartItems, selectCartTotal } from '../slices/cartSlice';
+import { removeFromCart, selectCartItems, selectCartTotal, updateTotalValue } from '../slices/cartSlice';
 import { urlFor } from '../services/sanity/sanity';
+import { useUser } from '../context/UserContext';
+import firestore from '@react-native-firebase/firestore'
+
 
 export default function Cart() {
-    const establishment = useSelector(selectEstablishment)
-    const navigation = useNavigation()
-    const cartItems = useSelector(selectCartItems)
-    const cartTotal = useSelector(selectCartTotal)
-    const [grupedItems, setGroupedItems] = useState({})
-    const dispatch = useDispatch()
-    const deliveryFee = 2;
+    const [modalVisible, setModalVisible] = useState(false);
+    const [deliveryOption, setDeliveryOption] = useState('Entrega');
+    const { user } = useUser();
+    const establishment = useSelector(selectEstablishment);
+    const navigation = useNavigation();
+    const cartItems = useSelector(selectCartItems);
+    const cartTotal = useSelector(selectCartTotal);
+    const [groupedItems, setGroupedItems] = useState({});
+    const dispatch = useDispatch();
+    const [deliveryFee, setDeliveryFee] = useState(2);
 
     useEffect(() => {
         const items = cartItems.reduce((group, item) => {
-            (group[item._id] = group[item._id] || []).push(item)
+            (group[item._id] = group[item._id] || []).push(item);
             return group;
-        }, {})
-        setGroupedItems(items)
-    }, [cartItems])
+        }, {});
+        setGroupedItems(items);
+    }, [cartItems]);
+
+    useEffect(() => {
+        const total = deliveryFee + cartTotal;
+        dispatch(updateTotalValue(total));
+    }, [cartTotal, deliveryFee, dispatch]);
+
+    const fazerPedido = async () => {
+        if (!user) {
+            console.error('Usuário não está logado');
+            return;
+        }
+
+        // Primeiro, agrupamos os itens pelo ID e somamos as quantidades
+        const groupedItemsById = cartItems.reduce((acc, item) => {
+            const existingItem = acc[item._id];
+            if (existingItem) {
+                existingItem.quantidade += 1;
+            } else {
+                acc[item._id] = { ...item, quantidade: 1 };
+            }
+            return acc;
+        }, {});
+
+        // Em seguida, mapeamos os itens agrupados para o formato desejado
+        const itensAgrupados = Object.values(groupedItemsById).map(item => ({
+            title: item.name,
+            description: item.description,
+            pictureurl: urlFor(item.image).url(),
+            category_id: item._type,
+            quantity: item.quantidade,
+            currency_id: "BRL",
+            unit_price: item.valor,
+
+        }));
+
+
+        const pedido = {
+            NomeDoUsuario: user.displayName,
+            Email: user.email,
+            TaxadeEntrega: deliveryFee,
+            ValorTotal: deliveryFee + cartTotal,
+            estabelecimento: establishment.name,
+            criadoEm: firestore.FieldValue.serverTimestamp(),
+            RetiradaEntrega: deliveryOption,
+            items: itensAgrupados,
+
+        };
+
+
+        try {
+            await firestore().collection('pedidos').doc(user.uid).set(pedido, { merge: true });
+            console.log("Pedido realizado com sucesso:", pedido);
+
+            navigation.navigate('Pay', { itensAgrupados: itensAgrupados });// Coloque o nome correto da rota de confirmação do pedido aqui
+        } catch (error) {
+            console.error('Erro ao salvar o pedido:', error);
+        }
+    };
+
 
     return (
         <View className="bg-white flex-1 mt-10 rounded-2xl">
@@ -66,7 +131,7 @@ export default function Cart() {
                     Meu Carrinho
                 </Text>
                 <Text className="text-center text-gray-500">
-                    {establishment.name}
+                    {user.displayName}
                 </Text>
             </View>
 
@@ -76,17 +141,63 @@ export default function Cart() {
                 className="flex-row px-4 items-center"
             >
                 <Image
-                    source={require('../assets/images/bikeGuy.png')}
-                    className="w-20 h-20 rounded-full"
+                    source={deliveryOption === 'Entrega'
+                        ? require('../assets/images/bikeGuy.png')
+                        : require('../assets/images/retirada.png')}
+                    style={{ width: 80, height: 80, borderRadius: 40 }}
                 />
-                <Text className="flex-1 pl-4">
-                    Entrega em 20-30 minutos
+                <Text style={{ flex: 1, paddingLeft: 16 }}>
+                    {deliveryOption === 'Entrega' ? 'Entrega em 20-30 minutos' : 'Retirar no Local'}
                 </Text>
-                <TouchableOpacity>
-                    <Text className="font-bold " style={{ color: themeColors.text }}>
+                <TouchableOpacity
+                    onPress={() => setModalVisible(true)}>
+                    <Text
+                        className="font-bold "
+                        style={{ color: themeColors.text }}>
                         Mudar
                     </Text>
                 </TouchableOpacity>
+
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}
+                >
+                    <View className="bg-white border-4 py-3 px-2  mx-5 mt-24 rounded-2xl flex flex-row items-center justify-center"
+                        style={{ borderColor: themeColors.bgColor(0.2) }}
+                    >
+                        <TouchableOpacity
+                            style={{ backgroundColor: themeColors.bgColor(1) }}
+                            className="p-3 rounded-full mr-3"
+                            onPress={() => {
+                                setDeliveryFee(2);
+                                setDeliveryOption('Entrega');
+                                setModalVisible(!modalVisible);
+                            }}
+                        >
+                            <Text className="text-white text-center font-bold text-lg">
+                                Entregar
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={{ backgroundColor: themeColors.bgColor(1) }}
+                            className="p-3 rounded-full"
+                            onPress={() => {
+                                setDeliveryOption('Retirar no Local');
+                                setModalVisible(!modalVisible);
+                                setDeliveryFee(0);
+                            }}
+                        >
+                            <Text className="text-white text-center font-bold text-lg">
+                                Retirar no Local
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                </Modal>
             </View>
 
             {/*Pratos */}
@@ -98,10 +209,8 @@ export default function Cart() {
                 }}
                 className="bg-white pt-5"
             >
-
-
                 {
-                    Object.entries(grupedItems).map(([key, items]) => (
+                    Object.entries(groupedItems).map(([key, items]) => (
 
 
                         <View
@@ -165,12 +274,12 @@ export default function Cart() {
                 </View>
                 <View>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('MakeWish')}
+                        onPress={fazerPedido}
                         style={{ backgroundColor: themeColors.bgColor(1) }}
                         className="p-3 rounded-full"
                     >
                         <Text className="text-white text-center font-bold text-lg">
-                            Fazer Pedido
+                            Confirmar Pedido
                         </Text>
                     </TouchableOpacity>
                 </View>

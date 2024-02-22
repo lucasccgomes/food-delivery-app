@@ -1,3 +1,5 @@
+import { useUser } from "../context/UserContext";
+
 function Login() {
     const { user, setUser } = useUser();
 

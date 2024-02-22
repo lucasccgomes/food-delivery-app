@@ -18,11 +18,20 @@ export const UserProvider = ({ children }) => {
 
   // Handle user state changes
   function onAuthStateChanged(user) {
-    setUser(user ? user.uid : null);
+    if (user) {
+        setUser({
+            uid: user.uid,
+            displayName: user.displayName, 
+            email: user.email,
+        });
+    } else {
+        setUser(null);
+    }
     if (initializing) setInitializing(false);
 
-    console.log("ID do Usuario-(UserContext):", user.uid);
-  }
+    console.log("Dados do usuário:", user.uid, user.displayName);
+}
+  
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);

@@ -1,57 +1,46 @@
-// No cartSlice.js
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createSelector } from '@reduxjs/toolkit'
 
 const initialState = {
   items: [],
-  userId: null, // Adicionado para associar o carrinho a um usuário específico
-};
+  totalValue: 0,
+}
 
 export const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    setUser: (state, action) => {
-      state.userId = action.payload; // Configura o ID do usuário para o estado do carrinho
-      console.log("UserId configurado:", action.payload); // Adiciona um console.log para verificar o userId configurado
-    },
     addToCart: (state, action) => {
-      console.log("UserId in addToCart action:", state.userId); 
-      if (state.userId === action.payload.userId) {
-        state.items = [...state.items, action.payload.item];
-      } else {
-        console.warn("Tentativa de adicionar item ao carrinho de outro usuário.");
-      }
-      console.log("UserId no addToCart:", state.userId); // Adiciona um console.log para verificar o userId ao adicionar ao carrinho
+      state.items = [...state.items, action.payload]
     },
     removeFromCart: (state, action) => {
-      if (state.userId === action.payload.userId) {
-        const itemId = action.payload.itemId;
-        state.items = state.items.filter(item => item._id !== itemId);
-      } else {
-        console.warn("Tentativa de remover item do carrinho de outro usuário.");
-      }
-      console.log("UserId no removeFromCart:", state.userId); // Adiciona um console.log para verificar o userId ao remover do carrinho
-    },
-    emptyCart: (state, action) => {
-      if (state.userId === action.payload.userId) {
-        state.items = [];
-      } else {
-        console.warn("Tentativa de esvaziar o carrinho de outro usuário.");
-      }
-      console.log("UserId no emptyCart:", state.userId); // Adiciona um console.log para verificar o userId ao esvaziar o carrinho
-    },
+        let newCart = [...state.items]
+        let itemIndex = state.items.findIndex(item => item._id==action.payload.id);
+        if(itemIndex>=0) {
+            newCart.splice(itemIndex, 1)
+        }else{
+            console.log("não é possível remover o item que não foi adicionado ao carrinho!")
+        }
+        state.items = newCart
+      },
+      emptyCart: (state, action) => {
+        state.items = []
+      },
+      updateTotalValue: (state, action) => {
+        state.totalValue = action.payload;
+      },
   },
-});
+})
 
-// Action creators são gerados para cada função reducer
-export const { setUser, addToCart, removeFromCart, emptyCart } = cartSlice.actions;
+// Action creators are generated for each case reducer function
+export const { addToCart, removeFromCart, emptyCart, updateTotalValue } = cartSlice.actions
 
 export const selectCartItems = state => state.cart.items;
 
-export const selectCartItemsById = (state, id) =>
-  state.cart.items.filter(item => item._id === id);
+export const selectCartItemsById = createSelector(
+  [selectCartItems, (state, id) => id],
+  (items, id) => items.filter(item => item._id === id)
+);
 
-export const selectCartTotal = state =>
-  state.cart.items.reduce((total, item) => total + item.valor, 0);
+export const selectCartTotal = state=> state.cart.items.reduce((total, item)=> total=total+item.valor, 0)
 
-export default cartSlice.reducer;
+export default cartSlice.reducer

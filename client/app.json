@@ -27,7 +27,9 @@
       "package": "com.lucasccgomes.client"
     },
     "plugins": [
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

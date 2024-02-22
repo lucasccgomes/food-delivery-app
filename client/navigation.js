@@ -6,6 +6,7 @@ import Establishment from './screens/Establishment';
 import Cart from './screens/Cart';
 import MakeWish from './screens/MakeWish';
 import Delivery from './screens/Delivery';
+import Pay from './screens/Pay';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,7 +21,7 @@ export default function Navigation() {
         <Stack.Screen name="Cart" options={{ presentation: 'transparentModal' }} component={Cart} />
         <Stack.Screen name="MakeWish" options={{ presentation: 'fullScreenModal' }} component={MakeWish} />
         <Stack.Screen name="Delivery" options={{ presentation: 'fullScreenModal' }} component={Delivery} />
-
+        <Stack.Screen name="Pay" options={{ presentation: 'fullScreenModal' }} component={Pay} />
       </Stack.Navigator>
     </NavigationContainer>
   );
