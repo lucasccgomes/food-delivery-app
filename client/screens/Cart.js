@@ -74,13 +74,13 @@ export default function Cart() {
             estabelecimento: establishment.name,
             criadoEm: firestore.FieldValue.serverTimestamp(),
             RetiradaEntrega: deliveryOption,
-            items: itensAgrupados,
+            itemsDoPedido: itensAgrupados,
 
         };
 
 
         try {
-            await firestore().collection('pedidos').doc(user.uid).set(pedido, { merge: true });
+            await firestore().collection('usuarios').doc(user.uid).set(pedido, { merge: true });
             console.log("Pedido realizado com sucesso:", pedido);
 
             navigation.navigate('Pay', { itensAgrupados: itensAgrupados });// Coloque o nome correto da rota de confirmação do pedido aqui

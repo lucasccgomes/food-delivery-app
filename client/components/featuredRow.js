@@ -1,3 +1,12 @@
+// ESTE COMPONENTE É UTILIZADO APENAS SE A HOME FOR PARA VARIOS ESTABELECIMENTO
+
+
+
+
+
+
+
+
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
 import React from 'react'
 import { themeColors } from '../theme'

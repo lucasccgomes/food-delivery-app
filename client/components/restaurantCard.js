@@ -1,3 +1,13 @@
+// ESTE COMPONENTE É UTILIZADO APENAS SE A HOME FOR PARA VARIOS ESTABELECIMENTO
+
+
+
+
+
+
+
+
+
 import { View, Text, TouchableNativeFeedback, Image } from 'react-native'
 import React from 'react'
 import AppStyles from '../shadow';
@@ -9,7 +19,8 @@ import { urlFor } from '../services/sanity/sanity';
 export default function RestaurantCard({ item }) {
 
     const navigation = useNavigation();
-    //console.log('item', item);
+    console.log('item', item);
+    
 
     return (
         <TouchableNativeFeedback

@@ -7,6 +7,8 @@ import Cart from './screens/Cart';
 import MakeWish from './screens/MakeWish';
 import Delivery from './screens/Delivery';
 import Pay from './screens/Pay';
+import PagamentoStatus from './screens/PagamentoStatus';
+import AddInfo from './screens/AddInfo';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,12 +18,13 @@ export default function Navigation() {
       <Stack.Navigator screenOptions={{
         headerShown: false,
       }}>
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Establishment" component={Establishment} />
-        <Stack.Screen name="Cart" options={{ presentation: 'transparentModal' }} component={Cart} />
-        <Stack.Screen name="MakeWish" options={{ presentation: 'fullScreenModal' }} component={MakeWish} />
-        <Stack.Screen name="Delivery" options={{ presentation: 'fullScreenModal' }} component={Delivery} />
-        <Stack.Screen name="Pay" options={{ presentation: 'fullScreenModal' }} component={Pay} />
+        <Stack.Screen name="Home" component={Establishment} />
+        <Stack.Screen name="Cart"  component={Cart} />
+        <Stack.Screen name="MakeWish"  component={MakeWish} />
+        <Stack.Screen name="Delivery"  component={Delivery} />
+        <Stack.Screen name="Pay" component={Pay} />
+        <Stack.Screen name="PagamentoStatus" component={PagamentoStatus} />
+        <Stack.Screen name="AddInfo" component={AddInfo} />
       </Stack.Navigator>
     </NavigationContainer>
   );

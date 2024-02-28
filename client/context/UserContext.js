@@ -31,6 +31,7 @@ export const UserProvider = ({ children }) => {
 
     console.log("Dados do usuário:", user.uid, user.displayName);
 }
+
   
 
   useEffect(() => {

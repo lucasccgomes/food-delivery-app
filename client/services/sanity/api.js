@@ -40,7 +40,7 @@ export const getFeaturedEstablishmentById = id => {
         }[0]`,
         { id }
     ).then(data => {
-        console.log("Dados retornados por getFeaturedEstablishmentById:", data);
+        //console.log("Dados retornados por getFeaturedEstablishmentById:", data);
         return data;
     }).catch(error => {
         console.error("Erro em getFeaturedEstablishmentById:", error);
