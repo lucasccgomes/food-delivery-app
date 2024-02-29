@@ -29,7 +29,8 @@ export const UserProvider = ({ children }) => {
     }
     if (initializing) setInitializing(false);
 
-    console.log("Dados do usuário:", user.uid, user.displayName);
+    console.log("Dados do usuário:", user?.uid, user?.displayName);
+
 }
 
   
