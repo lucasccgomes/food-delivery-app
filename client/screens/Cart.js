@@ -12,7 +12,6 @@ import firestore from '@react-native-firebase/firestore'
 
 
 export default function Cart() {
-    const [modalVisible, setModalVisible] = useState(false);
     const [deliveryOption, setDeliveryOption] = useState('Entrega');
     const { user } = useUser();
     const establishment = useSelector(selectEstablishment);
@@ -22,6 +21,13 @@ export default function Cart() {
     const [groupedItems, setGroupedItems] = useState({});
     const dispatch = useDispatch();
     const [deliveryFee, setDeliveryFee] = useState(2);
+
+    // Verifica se a lista de itens no carrinho está vazia
+    useEffect(() => {
+        if (cartItems.length === 0) {
+          navigation.goBack(); 
+        }
+      }, [cartItems, navigation]);
 
     useEffect(() => {
         const items = cartItems.reduce((group, item) => {
@@ -94,7 +100,7 @@ export default function Cart() {
         <View className="bg-white flex-1 mt-10 rounded-2xl">
 
             {/* Botão de Voltar */}
-            <View className=" relative py-4 "
+            <View className=" z-40 relative py-4"
                 style={{
                     shadowRadius: 7,
                     shadowColor: themeColors.bgColor(1),
@@ -150,7 +156,15 @@ export default function Cart() {
                     {deliveryOption === 'Entrega' ? 'Entrega em 20-30 minutos' : 'Retirar no Local'}
                 </Text>
                 <TouchableOpacity
-                    onPress={() => setModalVisible(true)}>
+                    onPress={() => {
+                        if (deliveryOption === 'Entrega') {
+                            setDeliveryOption('Retirar no Local');
+                            setDeliveryFee(0);
+                        } else {
+                            setDeliveryOption('Entrega');
+                            setDeliveryFee(2); // Assumindo que 2 é a taxa de entrega padrão
+                        }
+                    }}>
                     <Text
                         className="font-bold "
                         style={{ color: themeColors.text }}>
@@ -158,46 +172,6 @@ export default function Cart() {
                     </Text>
                 </TouchableOpacity>
 
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={() => {
-                        setModalVisible(!modalVisible);
-                    }}
-                >
-                    <View className="bg-white border-4 py-3 px-2  mx-5 mt-24 rounded-2xl flex flex-row items-center justify-center"
-                        style={{ borderColor: themeColors.bgColor(0.2) }}
-                    >
-                        <TouchableOpacity
-                            style={{ backgroundColor: themeColors.bgColor(1) }}
-                            className="p-3 rounded-full mr-3"
-                            onPress={() => {
-                                setDeliveryFee(2);
-                                setDeliveryOption('Entrega');
-                                setModalVisible(!modalVisible);
-                            }}
-                        >
-                            <Text className="text-white text-center font-bold text-lg">
-                                Entregar
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{ backgroundColor: themeColors.bgColor(1) }}
-                            className="p-3 rounded-full"
-                            onPress={() => {
-                                setDeliveryOption('Retirar no Local');
-                                setModalVisible(!modalVisible);
-                                setDeliveryFee(0);
-                            }}
-                        >
-                            <Text className="text-white text-center font-bold text-lg">
-                                Retirar no Local
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
-                </Modal>
             </View>
 
             {/*Pratos */}

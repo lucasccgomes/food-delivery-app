@@ -14,7 +14,7 @@ export const handleIntegrationMP = async (selectedPaymentMethod) => {
         "unit_price": 1
       }
     ],
-    "external_reference": "HmZJDnjUI6azCOdehRuIEk6z95E2",
+    "external_reference": "Zj4pvx7MmwOl4Q4MujzG8uGsXdy2",
     "notification_url": "https://southamerica-east1-food-delivery-app-413414.cloudfunctions.net/mercadoPagoIPNAppGeladinho",
     "payment_methods": {
       "excluded_payment_methods": [], // Inicia vazio a seleção é feita pelo usuaio

@@ -52,10 +52,12 @@ export default function Pay() {
         }
     };
 
-    const waitAndCheckPaymentStatus = async (userId, prefId, maxWaitTime = 60000, interval = 5000) => {
+    const waitAndCheckPaymentStatus = async (userId, prefId, maxWaitTime = 120000, interval = 2000) => {
         const startTime = Date.now();
         while (Date.now() - startTime < maxWaitTime) {
             const status = await checkPaymentStatus(userId, prefId);
+            console.log(`Verificando o status do pagamento para o usuário ${userId} com prefId ${prefId}...`);
+            console.log(`Status do pagamento: ${status}`);
             if (status === 'approved') {
                 return status;
             }
@@ -111,26 +113,36 @@ export default function Pay() {
             setShowWarningModal(true); // Mostra o modal de aviso
         } else {
             const url = await handleIntegrationMP(selectedPaymentMethod);
-            setPaymentUrl(url);
-            setIsModalVisible(true);
+            if (url) {
+                setPaymentUrl(url);
+                setIsModalVisible(true);
 
-            // Extrair o pref_id da URL
-            const prefId = extractPrefIdFromUrl(url);
+                // Extrair o pref_id da URL
+                const prefId = extractPrefIdFromUrl(url);
 
-            if (prefId) {
-                // Esperar e verificar o status do pagamento
-                const paymentStatus = await waitAndCheckPaymentStatus(userId, prefId);
-                if (paymentStatus === 'approved') {
-                    setIsModalVisible(false); // Fechar a WebView
-                    navigation.navigate('PagamentoStatus'); // Navegar para a tela de pagamento aprovado
-                    dispatch(emptyCart());
+                if (prefId) {
+                    // Esperar e verificar o status do pagamento
+                    const paymentStatus = await waitAndCheckPaymentStatus(userId, prefId);
+                    setIsModalVisible(false);
+                    console.log('Tentando navegar para PagamentoStatus', paymentStatus);
+                    if (paymentStatus === 'approved') {
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'PagamentoStatus' }],
+                        });
+                        // Navegar para a tela de pagamento aprovado
+                        dispatch(emptyCart());
+                    } else {
+                        // O pagamento não foi aprovado dentro do tempo máximo ou erro na verificação
+                        console.log('Pagamento não aprovado ou erro na verificação.');
+                        // Considerar adicionar feedback ao usuário aqui
+                    }
                 } else {
-                    // O pagamento não foi aprovado dentro do tempo máximo
-                    console.log('O pagamento não foi aprovado dentro do tempo máximo.');
+                    console.log('Não foi possível extrair o pref_id da URL.');
+                    // Feedback ao usuário sobre o erro
                 }
             } else {
-                // Não foi possível extrair o pref_id da URL
-                console.log('Não foi possível extrair o pref_id da URL.');
+                // Feedback ao usuário sobre o erro na obtenção da URL
             }
         }
     };
@@ -147,7 +159,7 @@ export default function Pay() {
         <View className="bg-white flex-1 mt-10 rounded-2xl">
 
             {/* Botão de Voltar */}
-            <View className=" relative py-4 "
+            <View className=" z-40 relative py-4 "
                 style={{
                     shadowRadius: 7,
                     shadowColor: themeColors.bgColor(1),
@@ -161,7 +173,7 @@ export default function Pay() {
                 }}
             >
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('PagamentoStatus')}
+                    onPress={() => navigation.goBack()}
                     style={{
                         backgroundColor: themeColors.bgColor(1),
                         shadowRadius: 7,
@@ -174,7 +186,7 @@ export default function Pay() {
                         shadowRadius: 10.32,
                         elevation: 13,
                     }}
-                    className="rounded-full p-3  top-5 left-8"
+                    className="absolute rounded-full p-3  top-5 left-8"
                 >
                     <Icon.ArrowLeft strokeWidth={3} stroke="white" />
                 </TouchableOpacity>

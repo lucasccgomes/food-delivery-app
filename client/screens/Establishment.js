@@ -9,12 +9,13 @@ import { useDispatch } from 'react-redux';
 import { setEstablishment } from '../slices/establishmentSlice';
 import { urlFor } from '../services/sanity/sanity';
 import { getFeaturedEstablishmentById } from '../services/sanity/api';
+import { useUser } from '../context/UserContext';
 
 export default function Establishment() {
   const [item, setItem] = useState(null);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-
+  const { user } = useUser();
 
   useEffect(() => {
     const id = '4d3f01bc-5a6f-4ac4-a190-0f592563b3e8';//id fixo do estabelecimento
@@ -33,17 +34,24 @@ export default function Establishment() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-   <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-   <View style={{ flex: 1 }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <View style={{ flex: 1 }}>
         <CartIcon />
         <ScrollView>
           <View className="relative">
             <Image className="w-full h-72" source={{ uri: urlFor(item.image).url() }} />
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              className="absolute top-14 left-8 bg-gray-50 p-3 rounded-full shadow"
+               onPress={() => navigation.navigate('Profile')}
+              style={{ backgroundColor: themeColors.bgColor(0.4) }}
+              className="absolute top-14 right-8 p-2 rounded-full shadow"
             >
-              <Icon.ArrowLeft strokeWidth={3} stroke={themeColors.bgColor(1)} />
+              {user.photoURL && (
+                <Image className="w-14 h-14 rounded-full"
+                 
+                  source={{ uri: user.photoURL }}
+
+                />
+              )}
             </TouchableOpacity>
           </View>
           <View

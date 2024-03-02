@@ -1,60 +1,334 @@
-import React, { useState } from 'react';
-import { Button, TextInput, View, StyleSheet, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TextInput, View, Image, Text, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import { useUser } from '../context/UserContext';
+import { themeColors } from '../theme';
+import { useForm, Controller } from 'react-hook-form';
+import { Picker } from '@react-native-picker/picker';
 
-const AddInfo = ({ navigation, route }) => {
-  const [cidade, setCidade] = useState('');
-  const [rua, setRua] = useState('');
-  const [numero, setNumero] = useState('');
-  const [bairro, setBairro] = useState('');
-  const userUid = route.params.userUid; // Garanta que o userUid está sendo passado corretamente
+const AddInfo = ({ navigation }) => {
+  const { user } = useUser();
+  const [logoUrl, setLogoUrl] = useState('');
+  const [cidades, setCidades] = useState([]);
 
-  const adicionarEndereco = async () => {
-    await firestore()
-      .collection('usuarios')
-      .doc(userUid)
-      .set({
+
+  const { control, handleSubmit, formState: { errors }, setValue } = useForm();
+
+  useEffect(() => {
+    const docRef = firestore().collection('admin').doc('carol');
+    const unsubscribe = docRef.onSnapshot(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        setLogoUrl(data.urlLogo);
+        setCidades([data.cidades.cidade]);
+      } else {
+        console.log('Documento não encontrado');
+      }
+    }, error => {
+      console.error('Erro ao obter as cidades:', error);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (cidades.length > 0) {
+      setValue("cidade", cidades[0], { shouldValidate: true });
+    }
+  }, [cidades, setValue]);
+
+  useEffect(() => {
+    if (!user || !user.uid) {
+      Alert.alert('Erro', 'Não foi possível identificar o usuário. Por favor, faça login novamente.');
+      navigation.navigate('Login');
+    }
+  }, [user, navigation]);
+
+  const onSubmit = async (data) => {
+    if (!user || !user.uid) {
+      console.error("userUid não está disponível.");
+      return;
+    }
+
+    const pontoReferencia = data.pontoReferencia || '';
+
+    try {
+      const userRef = firestore().collection('usuarios').doc(user.uid);
+      await userRef.set({
         EnderecoEntrega: {
-          Cidade: cidade,
-          Rua: rua,
-          Numero: numero,
-          Bairro: bairro
-        }
+          Cidade: data.cidade,
+          Rua: data.rua,
+          Numero: data.numero,
+          Bairro: data.bairro,
+          PontoReferencia: pontoReferencia,
+        },
+        WhatsApp: data.phone,
+        Nome_2: data.nome,
       }, { merge: true });
-    
-    navigation.navigate('TelaPrincipal'); // Ou qualquer outra tela para a qual você deseja redirecionar após
+
+      console.log(`Endereço adicionado ao documento do usuário: ${user.uid}`);
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error("Erro ao adicionar endereço:", error);
+      Alert.alert('Erro', 'Erro ao adicionar endereço. Tente novamente.');
+    }
   };
 
+
+  const formatWhatsApp = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    let formatted = numbers.slice(0, 2);
+    if (formatted.length) formatted = `(${formatted}`;
+    if (numbers.length >= 3) formatted += `)${numbers.slice(2, 7)}`;
+    if (numbers.length >= 8) formatted += `-${numbers.slice(7, 11)}`;
+
+    return formatted;
+  };
+
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Adicionar Endereço</Text>
-      <TextInput placeholder="Cidade" value={cidade} onChangeText={setCidade} style={styles.input} />
-      <TextInput placeholder="Rua" value={rua} onChangeText={setRua} style={styles.input} />
-      <TextInput placeholder="Número" value={numero} onChangeText={setNumero} style={styles.input} />
-      <TextInput placeholder="Bairro" value={bairro} onChangeText={setBairro} style={styles.input} />
-      <Button title="Confirmar" onPress={adicionarEndereco} />
+    <View
+      className="h-full w-full flex justify-center items-center"
+      style={{ backgroundColor: themeColors.bgColor(0.5) }}
+    >
+      <View>
+
+        {!logoUrl ? (
+          <Text>Carregando logo...</Text>
+        ) : (
+          <Image className=" w-80 h-48"
+            source={{ uri: logoUrl }}
+          />
+        )
+        }
+      </View>
+      <Text className="text-2xl text-white font-bold mb-9">
+        Preencha as Informações
+      </Text>
+      <View className="w-[75%]">
+
+        {/* Campo Nome */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'Nome é obrigatório',
+            minLength: {
+              value: 3,
+              message: 'Nome deve ter no mínimo 3 caracteres'
+            },
+            pattern: {
+              value: /^[A-Za-z\s]+$/,
+              message: 'Nome deve conter apenas letras'
+            }
+          }}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={(text) => {
+                  // Remove tudo que não é letra ou espaço antes de atualizar
+                  const onlyLetters = text.replace(/[^A-Za-z\s]/g, '');
+                  onChange(onlyLetters);
+                }}
+                value={value}
+                placeholder="Nome Completo"
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="nome"
+        />
+
+
+        {/* Campo Cidade */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'Cidade é obrigatória',
+          }}
+          render={({ field: { onChange, value }, fieldState: { error } }) => (
+            <View className="bg-white mb-3 rounded-lg">
+              <Picker
+                className="bg-white p-2 mb-3 rounded-lg"
+                selectedValue={value}
+                onValueChange={(itemValue, itemIndex) => onChange(itemValue)}
+              >
+                {/* Supondo que cada cidade é um objeto com uma propriedade 'nome' */}
+                {cidades.map((nomeCidade, index) => (
+                  <Picker.Item key={index} label={nomeCidade} value={nomeCidade} />
+                ))}
+              </Picker>
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="cidade"
+        />
+
+        {/* Campo Rua */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'Rua é obrigatória',
+            minLength: {
+              value: 3,
+              message: 'Rua deve ter no mínimo 3 caracteres'
+            },
+            pattern: {
+              value: /^[A-Za-z0-9\s]{3,}$/,
+              message: 'Rua deve conter letras e números'
+            }
+          }}
+
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                placeholder="Rua"
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="rua"
+        />
+
+        {/* Campo Bairro */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'Bairro é obrigatório',
+            minLength: {
+              value: 2,
+              message: 'Bairro deve ter no mínimo 2 caracteres'
+            },
+            pattern: {
+
+            }
+          }}
+
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                placeholder="Bairro"
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="bairro"
+        />
+        {/* Campo Numero */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'Número é obrigatório',
+            minLength: {
+              value: 1,
+              message: 'Número deve ter no mínimo 1 caractere'
+            },
+            pattern: {
+              value: /^\d+$/,
+              message: 'Número deve conter apenas números'
+            }
+          }}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={(text) => {
+                  // Remove tudo que não é número antes de atualizar
+                  const onlyNums = text.replace(/[^0-9]/g, '');
+                  onChange(onlyNums);
+                }}
+                value={value}
+                placeholder="Numero"
+                keyboardType="numeric" // Isso assegura que o teclado numérico seja mostrado
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="numero"
+        />
+
+
+        {/* Campo PtRefrencia */}
+        <Controller
+          control={control}
+          rules={{
+            maxLength: {
+              value: 25,
+              message: 'Ponto de referência deve ter no máximo 25 caracteres'
+            }
+          }}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                placeholder="Ponto de referência"
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="pontoReferencia"
+        />
+
+        {/* Campo WahtsApp */}
+        <Controller
+          control={control}
+          rules={{
+            required: 'WhatsApp é obrigatório',
+            pattern: {
+              value: /^\(\d{2}\)\d{4,5}-\d{4}$/,
+              message: 'WhatsApp deve estar no formato (XX)XXXXX-XXXX'
+            }
+          }}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                className="bg-white p-2 mb-3 rounded-lg"
+                onBlur={onBlur}
+                onChangeText={(text) => {
+                  // Aplica a formatação e atualiza o valor
+                  const formattedText = formatWhatsApp(text);
+                  onChange(formattedText);
+                }}
+                value={value}
+                placeholder="WhatsApp"
+                keyboardType="phone-pad"
+              />
+              {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+            </View>
+          )}
+          name="phone"
+        />
+
+        <View className="mt-5 mb-5">
+          <TouchableOpacity
+            onPress={handleSubmit(onSubmit)}
+            style={{ backgroundColor: themeColors.bgColor(1) }}
+            className="p-3 rounded-full"
+          >
+            <Text className="text-white text-center font-bold text-lg">
+              Confirmar
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: 'center'
-  },
-  input: {
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1
-  }
-});
 
 export default AddInfo;
+
+
