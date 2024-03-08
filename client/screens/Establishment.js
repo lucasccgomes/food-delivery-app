@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, StatusBar, SafeAreaView, Modal, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
@@ -10,9 +10,12 @@ import { setEstablishment } from '../slices/establishmentSlice';
 import { urlFor } from '../services/sanity/sanity';
 import { getFeaturedEstablishmentById } from '../services/sanity/api';
 import { useUser } from '../context/UserContext';
+import firestore from '@react-native-firebase/firestore';
+
 
 export default function Establishment() {
   const [item, setItem] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { user } = useUser();
@@ -24,8 +27,41 @@ export default function Establishment() {
       setItem(estabelecimento);
       if (estabelecimento && estabelecimento._id) {
         dispatch(setEstablishment(estabelecimento));
+        saveToFirestore(estabelecimento);
       }
     });
+  }, []);
+
+  const saveToFirestore = (estabelecimento) => {
+    const carolRef = firestore().collection('admin').doc('carol');
+    const gerenciaEstoqueRef = carolRef.collection('GerenciaEstoque');
+  
+    estabelecimento.produtos.forEach(produto => {
+      if (produto._id) {
+        const produtoRef = gerenciaEstoqueRef.doc(produto._id);
+        produtoRef.set({
+          nome: produto.name,
+          qtdEstoque: 0,
+        });
+      } else {
+        console.error('Produto sem _id:', produto);
+      }
+    });
+  };
+
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection('admin')
+      .doc('carol')
+      .onSnapshot(documentSnapshot => {
+        const data = documentSnapshot.data();
+        if (data && data.AberFech === 'fechado') {
+          setModalVisible(true);
+        } else {
+          setModalVisible(false);
+        }
+      });
+    return () => unsubscribe();
   }, []);
 
   if (!item) {
@@ -35,25 +71,32 @@ export default function Establishment() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
       <View style={{ flex: 1 }}>
         <CartIcon />
         <ScrollView>
           <View className="relative">
-            <Image className="w-full h-72" source={{ uri: urlFor(item.image).url() }} />
+            {item && item.image && (
+              <Image
+                className="w-full h-72"
+                source={{ uri: urlFor(item.image).url() }}
+              />
+            )}
             <TouchableOpacity
-               onPress={() => navigation.navigate('Profile')}
+              onPress={() => navigation.navigate('Profile')}
               style={{ backgroundColor: themeColors.bgColor(0.4) }}
               className="absolute top-14 right-8 p-2 rounded-full shadow"
             >
               {user.photoURL && (
                 <Image className="w-14 h-14 rounded-full"
-                 
+
                   source={{ uri: user.photoURL }}
 
                 />
               )}
             </TouchableOpacity>
           </View>
+
           <View
             className="bg-white -mt-12 pt-6 "
             style={{
@@ -61,6 +104,7 @@ export default function Establishment() {
               borderTopRightRadius: 40,
             }}
           >
+
             <View className="px-5">
               <Text className="text-3xl font-bold">
                 {item.name}
@@ -72,10 +116,7 @@ export default function Establishment() {
                     {item.avaliacao}
                   </Text>
                   <Text className="text-gray-700">
-                    ({item.avaliacoes} Vendas) .
-                    <Text className="font-semibold text-xs">
-                      {item?.tipo?.name}
-                    </Text>
+                    ({item.avaliacoes} Vendas)  -
                   </Text>
                 </View>
 
@@ -99,6 +140,19 @@ export default function Establishment() {
               item.produtos.map((produto, index) => <DishRow item={{ ...produto }} key={index} />)
             }
           </View>
+          <Modal
+
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+            }}>
+            <View className="mt-[51.4%]">
+              <View className="bg-gray-600 opacity-50 h-full rounded-t-[40px]">
+                <Text className="text-center text-red-600 font-bold">FECAHDO NO MOMENTO</Text>
+              </View>
+            </View>
+          </Modal>
         </ScrollView>
       </View>
     </SafeAreaView>

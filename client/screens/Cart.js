@@ -20,14 +20,29 @@ export default function Cart() {
     const cartTotal = useSelector(selectCartTotal);
     const [groupedItems, setGroupedItems] = useState({});
     const dispatch = useDispatch();
-    const [deliveryFee, setDeliveryFee] = useState(2);
+    const [deliveryFee, setDeliveryFee] = useState('');
 
     // Verifica se a lista de itens no carrinho está vazia
     useEffect(() => {
+        const fetchDeliveryFee = async () => {
+            try {
+                const establishmentDoc = await firestore().collection('admin').doc('carol').get();
+                const establishmentData = establishmentDoc.data();
+                const taxaEntrega = establishmentData.TaxaEntrega; // Certifique-se de que o nome do campo está correto
+                setDeliveryFee(taxaEntrega);
+            } catch (error) {
+                console.error('Erro ao buscar a taxa de entrega:', error);
+            }
+        };
+
+        fetchDeliveryFee();
+    }, []);
+
+    useEffect(() => {
         if (cartItems.length === 0) {
-          navigation.goBack(); 
+            navigation.goBack();
         }
-      }, [cartItems, navigation]);
+    }, [cartItems, navigation]);
 
     useEffect(() => {
         const items = cartItems.reduce((group, item) => {
@@ -89,7 +104,7 @@ export default function Cart() {
             await firestore().collection('usuarios').doc(user.uid).set(pedido, { merge: true });
             console.log("Pedido realizado com sucesso:", pedido);
 
-            navigation.navigate('Pay', { itensAgrupados: itensAgrupados });// Coloque o nome correto da rota de confirmação do pedido aqui
+            navigation.navigate('Pay', { deliveryOption: deliveryOption, itensAgrupados: itensAgrupados });// Coloque o nome correto da rota de confirmação do pedido aqui
         } catch (error) {
             console.error('Erro ao salvar o pedido:', error);
         }

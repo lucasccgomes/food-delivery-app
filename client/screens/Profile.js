@@ -4,9 +4,8 @@ import { useUser } from '../context/UserContext';
 import firestore from '@react-native-firebase/firestore';
 import { themeColors } from '../theme';
 import * as Icon from "react-native-feather";
-import { Picker } from '@react-native-picker/picker';
-import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
+import AddressModal from '../components/AddressModal';
 
 export default function Profile() {
     const { signOut } = useUser();
@@ -14,54 +13,36 @@ export default function Profile() {
     const [userInfo, setUserInfo] = useState(null);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const navigation = useNavigation();
-    const [newAddress, setNewAddress] = useState({
-        Rua: '',
-        Numero: '',
-        Bairro: '',
-        Cidade: '', // Inicializa a cidade no estado do endereço
-    });
-
-    const { control, handleSubmit, setValue } = useForm();
 
     useEffect(() => {
-        if (user && user.uid) {
-            const unsubscribe = firestore()
-                .collection('usuarios')
-                .doc(user.uid)
-                .onSnapshot(documentSnapshot => {
-                    if (documentSnapshot.exists) {
-                        const userData = documentSnapshot.data();
-                        setUserInfo(userData);
-                        setValue('cidade', userData.EnderecoEntrega.Cidade); // Define o valor inicial para o campo cidade
-                        // Define os valores iniciais do endereço
-                        setNewAddress({
-                            Rua: userData.EnderecoEntrega.Rua,
-                            Numero: userData.EnderecoEntrega.Numero,
-                            Bairro: userData.EnderecoEntrega.Bairro,
-                            Cidade: userData.EnderecoEntrega.Cidade,
-                        });
-                    } else {
-                        console.log('Usuário não encontrado no Firestore');
-                    }
-                });
-
-            return () => unsubscribe();
-        }
-    }, [user, setValue]);
-
-    const handleSaveChanges = async () => {
-        if (user && user.uid) {
-            await firestore().collection('usuarios').doc(user.uid).update({
-                EnderecoEntrega: newAddress,
+        const userId = user.uid; 
+    
+        const unsubscribe = firestore()
+            .collection('usuarios') 
+            .doc(userId)
+            .onSnapshot(documentSnapshot => {
+                if (documentSnapshot.exists) {
+                    setUserInfo(documentSnapshot.data());
+                } else {
+                    console.log('Usuário não encontrado no Firestore');
+                }
+            }, error => {
+                console.error("Erro ao buscar dados do usuário: ", error);
             });
-            setEditModalVisible(false);
-        }
+    
+        return () => unsubscribe();
+    }, [user.uid]);
+    
+    const handleUpdateAddress = (newAddress) => {
+        setUserInfo((prevState) => ({
+            ...prevState,
+            EnderecoEntrega: newAddress,
+        }));
     };
 
     if (!userInfo) {
-        return <Text></Text>;
+        return   <Text>Carregando...</Text>;
     }
-
 
     return (
         <SafeAreaView className="flex-1"
@@ -125,7 +106,7 @@ export default function Profile() {
                         className="p-3 rounded-full"
                     >
                         <Text className="text-white text-center font-bold text-lg">
-                            Alterar Endereço
+                            Atualizar Dados
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -157,6 +138,12 @@ export default function Profile() {
                             {`${userInfo.EnderecoEntrega.Rua}, ${userInfo.EnderecoEntrega.Numero}, ${userInfo.EnderecoEntrega.Bairro}, ${userInfo.EnderecoEntrega.Cidade}`}
                         </Text>
                     </View>
+                    <View className="flex flex-row items-center mb-3">
+                        <Icon.Map color="gray" width="30" height="30" />
+                        <Text className="ml-2">
+                            {userInfo.EnderecoEntrega.PontoReferencia}
+                        </Text>
+                    </View>
                 </View>
 
                 <Text className="mt-3 mb-0">
@@ -164,59 +151,19 @@ export default function Profile() {
                 </Text>
                 <View className="bg-white h-[30%] w-[85%] mt-3 rounded-2xl">
 
+
+
                 </View>
             </View>
 
-
             {/* Modal para edição de endereço */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={editModalVisible}
-                onRequestClose={() => {
-                    setEditModalVisible(!editModalVisible);
-                }}
-            >
-                <View style={{ marginTop: 50, backgroundColor: 'white', padding: 20 }}>
-                    <Text>Novo Endereço:</Text>
-                    <View className="bg-white mb-3 rounded-lg">
-                        <Controller
-                            control={control}
-                            render={({ field: { onChange, value } }) => (
-                                <Picker
-                                    selectedValue={value}
-                                    onValueChange={(itemValue) => onChange(itemValue)}
-                                >
-                                    {/* Aqui você listaria todas as cidades disponíveis */}
-                                    {/* Exemplo: */}
-                                    <Picker.Item label="Sagres" value="Sagres" />
-                                    {/* Adicione aqui outras cidades */}
-                                </Picker>
-                            )}
-                            name="cidade"
-                            rules={{ required: true }}
-                        />
-                    </View>
-                    {/* Inputs para o novo endereço. Exemplo para a rua: */}
-                    <TextInput
-                        placeholder="Rua"
-                        value={newAddress.Rua}
-                        onChangeText={text => setNewAddress({ ...newAddress, Rua: text })}
-                    />
-                    <TextInput
-                        placeholder="Numero"
-                        value={newAddress.Numero}
-                        onChangeText={text => setNewAddress({ ...newAddress, Numero: text })}
-                    />
-                    <TextInput
-                        placeholder="Bairro"
-                        value={newAddress.Bairro}
-                        onChangeText={text => setNewAddress({ ...newAddress, Bairro: text })}
-                    />
-                    {/* Repita os TextInput para outros campos do endereço */}
-                    <Button onPress={handleSubmit(handleSaveChanges)} title="Salvar" />
-                </View>
-            </Modal>
+            <AddressModal
+                isVisible={editModalVisible}
+                onClose={() => setEditModalVisible(false)}
+                onUpdateAddress={handleUpdateAddress}
+                showWhatsAppInput={true}
+            />
+
         </SafeAreaView >
     );
 }

@@ -12,6 +12,8 @@ import Pay from './screens/Pay';
 import AddInfo from './screens/AddInfo';
 import Profile from './screens/Profile';
 import PagamentoStatus from './screens/PagamentoStatus';
+import PayTroco from './screens/PayTroco';
+import PedidoMoney from './screens/PedidoMoney';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +90,9 @@ export default function Navigation() {
               <Stack.Screen name="Pay" options={{presentation: 'fullScreenModal'}} component={Pay} />
               <Stack.Screen name="PagamentoStatus" options={{presentation: 'fullScreenModal'}} component={PagamentoStatus} />
               <Stack.Screen name="Profile" options={{presentation: 'fullScreenModal'}} component={Profile} />
+              <Stack.Screen name="PayTroco" options={{presentation: 'fullScreenModal'}} component={PayTroco} />
+              <Stack.Screen name="PedidoMoney" options={{presentation: 'fullScreenModal'}} component={PedidoMoney} />
+
             </>
           ) : (
             <Stack.Screen name="AddInfo" component={AddInfo} />

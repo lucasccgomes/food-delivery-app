@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput, Dimensions, StatusBar } from 'react-native'
+import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput, Dimensions, Button } from 'react-native'
 import React, { useEffect, useState } from 'react';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
@@ -11,14 +11,17 @@ import firestore from '@react-native-firebase/firestore';
 import { emptyCart } from '../slices/cartSlice';
 import { useDispatch } from 'react-redux';
 import { useRoute } from '@react-navigation/native';
-import AddressModal from '../components/AddressModal';
+import { useForm, Controller } from 'react-hook-form';
+import { Picker } from '@react-native-picker/picker';
 
 
 const { width, height } = Dimensions.get('window');
 
 
 export default function Pay() {
+
     const dispatch = useDispatch();
+    const { control, handleSubmit, setValue } = useForm();
     const { user } = useUser();
     const [userInfo, setUserInfo] = useState(null);
     const route = useRoute();
@@ -37,115 +40,82 @@ export default function Pay() {
     const [needsChange, setNeedsChange] = useState(false);
     const [changeNeeded, setChangeNeeded] = useState('');
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [userAddress, setUserAddress] = useState('');
-    const [enderecoRetirada, setEnderecoRetirada] = useState('');
-    const [orderItems, setOrderItems] = useState([]);
-    const [paymentDetails, setPaymentDetails] = useState({ title: '', description: '', categoria: '' });
-    const [nameUid, setNameUid] = useState('');
-    const [nameUsuario, setNameUsuario] = useState('');
-    const [retiradaEntrega, setRetiradaEntrega] = useState('');
+    const [newAddress, setNewAddress] = useState({
+        Rua: '',
+        Numero: '',
+        Bairro: '',
+        Cidade: '',
+        PontoReferencia: '',
+    });
+
+  
 
     console.log('Troco para:', changeAmount)
     console.log('Cliente:', changeNeeded)
     console.log('Meio de pagamento:', selectedPaymentMethod)
     console.log('ID do Usuario (PAY):', user.uid)
-    console.log('Valor total do pedido (totalOrderValue):', totalOrderValue);
 
-    useEffect(() => {
-        const fetchPaymentDetails = async () => {
-            try {
-                const docRef = firestore().collection('admin').doc('carol');
-                const docSnapshot = await docRef.get();
-                if (docSnapshot.exists) {
-                    const { title, descricao, categoria } = docSnapshot.data();
-                    // Certifique-se de incluir a categoria ao definir o estado.
-                    setPaymentDetails({ title, description: descricao, categoria });
-                } else {
-                    console.log("Documento não encontrado no Firestore");
-                }
-            } catch (error) {
-                console.error("Erro ao buscar dados no Firestore:", error);
-            }
-        };
-
-        fetchPaymentDetails();
-    }, []);
+   
 
     useEffect(() => {
         if (user && user.uid) {
             const unsubscribe = firestore()
                 .collection('usuarios')
                 .doc(user.uid)
-                .onSnapshot(docSnapshot => {
-                    if (docSnapshot.exists) {
-                        const data = docSnapshot.data();
-                        setNameUid(data.NomeDoUsuario);  // Armazenando o nome completo do usuário
-                        setNameUsuario(data.Nome_2);
-                        setRetiradaEntrega(data.RetiradaEntrega)
-                        const items = data.itemsDoPedido.map(item => ({
-                            quantity: item.quantity,
-                            title: item.title,
-                            unit_price: item.unit_price
-                        }));
-                        setOrderItems(items);
+                .onSnapshot(documentSnapshot => {
+                    if (documentSnapshot.exists) {
+                        const userData = documentSnapshot.data();
+                        setUserInfo(userData);
+                        setValue('cidade', userData.EnderecoEntrega.Cidade);
+                        setValue('pontoReferencia', userData.EnderecoEntrega.PontoReferencia);
+                        // Define os valores iniciais do endereço
+                        setNewAddress({
+                            Rua: userData.EnderecoEntrega.Rua,
+                            Numero: userData.EnderecoEntrega.Numero,
+                            Bairro: userData.EnderecoEntrega.Bairro,
+                            Cidade: userData.EnderecoEntrega.Cidade,
+                            PontoReferencia: userData.EnderecoEntrega.PontoReferencia,
+                        });
                     } else {
-                        console.log('Documento do usuário não encontrado');
+                        console.log('Usuário não encontrado no Firestore');
                     }
-                }, err => {
-                    console.error('Erro ao buscar itens do pedido:', err);
                 });
 
             return () => unsubscribe();
         }
-    }, [user]);
-
-    useEffect(() => {
-        const fetchEnderecoRetirada = async () => {
-            const docRef = firestore().collection('admin').doc('carol');
-            const docSnapshot = await docRef.get();
-            if (docSnapshot.exists) {
-                const data = docSnapshot.data();
-                setEnderecoRetirada(data.EnderecoRetirada);
-            } else {
-                console.log("Documento não encontrado");
-            }
-        };
-
-        fetchEnderecoRetirada();
-    }, []);
-
-    useEffect(() => {
-        if (userInfo && userInfo.EnderecoEntrega) {
-            const { Rua, Numero, Bairro, Cidade } = userInfo.EnderecoEntrega;
-            const address = `${Rua}, ${Numero}, ${Bairro}, ${Cidade}`;
-            setUserAddress(address);
-        }
-    }, [userInfo]);
+    }, [user, setValue]);
 
     useEffect(() => {
         const fetchEnderecoRetirada = async () => {
             if (deliveryOption === 'Retirar no Local') {
-                const docRef = firestore().collection('admin').doc('carol');
-                const docSnapshot = await docRef.get();
-                if (docSnapshot.exists) {
-                    const data = docSnapshot.data();
-                    setAddress(
-                        <Text>
-                            <Text className="font-bold">Retirada:</Text> {data.EnderecoRetirada}
-                        </Text>
-                    );
-                }
+                // Busque o endereço de retirada da coleção 'admin'
+                const fetchEnderecoRetirada = async () => {
+                    const docRef = firestore().collection('admin').doc('carol');
+                    const docSnapshot = await docRef.get();
+                    if (docSnapshot.exists) {
+                        const data = docSnapshot.data();
+                        setAddress(
+                            <Text>
+                                <Text className="font-bold">Retirada:</Text> {data.EnderecoRetirada}
+                            </Text>
+                        );
+                    }
+                };
+
+                fetchEnderecoRetirada();
             } else {
+                // Carregar o endereço de entrega normal do usuário
                 if (userInfo && userInfo.EnderecoEntrega) {
                     const { Rua, Numero, Bairro, Cidade } = userInfo.EnderecoEntrega;
                     setAddress(
                         <Text>
-                            <Text className="font-bold">Entrega:</Text> {userInfo && userInfo.EnderecoEntrega ? `${userInfo.EnderecoEntrega.Rua}, ${userInfo.EnderecoEntrega.Numero}, ${userInfo.EnderecoEntrega.Bairro}, ${userInfo.EnderecoEntrega.Cidade}` : 'Carregando endereço...'}
+                            <Text className="font-bold">Entrega:</Text> {`${Rua}, ${Numero}, ${Bairro}, ${Cidade}`}
                         </Text>
                     );
                 }
             }
         };
+
         fetchEnderecoRetirada();
     }, [deliveryOption, user, userInfo]);
 
@@ -162,10 +132,21 @@ export default function Pay() {
                 console.error('Erro ao carregar informações do usuário:', error);
             }
         };
+
         if (user && user.uid) {
             loadUserInfo();
         }
     }, [user]);
+
+    // Função para salvar o endereço atualizado
+    const handleSaveChanges = async () => {
+        if (user && user.uid) {
+            await firestore().collection('usuarios').doc(user.uid).update({
+                EnderecoEntrega: newAddress,
+            });
+            setEditModalVisible(false);
+        }
+    };
 
     const extractPrefIdFromUrl = (url) => {
         try {
@@ -177,23 +158,47 @@ export default function Pay() {
         }
     };
 
+    const saveTotalValueIfPaymentApproved = async (userId, prefId, totalValue) => {
+        try {
+          // Somente atualiza o ValorTotal se o status do pagamento for 'approved'
+          await firestore()
+            .collection('usuarios')
+            .doc(userId)
+            .collection('pedidos')
+            .doc(prefId)
+            .set({
+              ValorTotal: totalValue
+            }, { merge: true });
+      
+          console.log('Valor total salvo com sucesso após aprovação do pagamento.');
+        } catch (error) {
+          console.error('Erro ao salvar o valor total após aprovação do pagamento:', error);
+        }
+      };
+
     const waitAndCheckPaymentStatus = async (userId, prefId, totalOrderValue, taxaCartaoFor, maxWaitTime = 120000, interval = 2000) => {
         const startTime = Date.now();
         while (Date.now() - startTime < maxWaitTime) {
-            const status = await checkPaymentStatus(userId, prefId);
-            console.log(`Verificando o status do pagamento para o usuário ${userId} com prefId ${prefId}...`);
-            console.log(`Status do pagamento: ${status}`);
-            if (status === 'approved') {
-                // Aqui é onde você deve salvar o valor total se o pagamento for aprovado
-                await saveTotalValueIfPaymentApproved(userId, prefId, totalOrderValue + taxaCartaoFor);
-                return status;
-            }
-            await new Promise(resolve => setTimeout(resolve, interval)); // Espera por um intervalo antes de verificar novamente
+          const status = await checkPaymentStatus(userId, prefId);
+          console.log(`Verificando o status do pagamento para o usuário ${userId} com prefId ${prefId}...`);
+          console.log(`Status do pagamento: ${status}`);
+          if (status === 'approved') {
+            // Aqui é onde você deve salvar o valor total se o pagamento for aprovado
+            await saveTotalValueIfPaymentApproved(userId, prefId, totalOrderValue + taxaCartaoFor);
+            return status;
+          }
+          await new Promise(resolve => setTimeout(resolve, interval)); // Espera por um intervalo antes de verificar novamente
         }
         return null; // Retorna null se o pagamento não for aprovado dentro do tempo máximo
+      };
+
+    const handleConfirm = () => {
+        if (selectedPaymentMethod === 'Dinheiro' && changeNeeded === '') {
+            setShowSelectChangeModal(true);
+        } else {
+            navigation.navigate('AguardandoPedido', { changeNeeded, changeAmount });
+        }
     };
-
-
 
     useEffect(() => {
         if (selectedPaymentMethod !== 'Dinheiro') {
@@ -233,7 +238,7 @@ export default function Pay() {
         if (!selectedPaymentMethod) {
             setShowWarningModal(true); // Mostra o modal de aviso
         } else {
-            const url = await handleIntegrationMP(selectedPaymentMethod, valorTotalComTaxa, paymentDetails.title, paymentDetails.description, paymentDetails.categoria, userId);
+            const url = await handleIntegrationMP(selectedPaymentMethod);
             if (url) {
                 setPaymentUrl(url);
                 setIsModalVisible(true);
@@ -249,7 +254,7 @@ export default function Pay() {
                     if (paymentStatus === 'approved') {
                         navigation.reset({
                             index: 0,
-                            routes: [{ name: 'PagamentoStatus', params: { prefId } }],
+                            routes: [{ name: 'PagamentoStatus' }],
                         });
                         // Navegar para a tela de pagamento aprovado
                         dispatch(emptyCart());
@@ -268,6 +273,8 @@ export default function Pay() {
         }
     };
 
+
+    
     const handlePaymentButtonClick = () => {
         if (!selectedPaymentMethod) {
             setShowWarningModal(true); // Mostra o modal de aviso
@@ -276,103 +283,9 @@ export default function Pay() {
         }
     };
 
-    const handleUpdateAddress = (newAddress) => {
-        setUserInfo((prevState) => ({
-            ...prevState,
-            EnderecoEntrega: newAddress,
-        }));
-    };
-
-    const valorTotalComTaxa = totalOrderValue + taxaCartaoFor;
-    const saveTotalValueIfPaymentApproved = async (userId, prefId) => {
-        try {
-            let dataToSave = {
-                ValorTotal: valorTotalComTaxa,
-                itemsDoPedido: orderItems,
-                NomeDoUsuario: nameUid,
-                Nome_2: nameUsuario,
-                RetiradaEntrega: retiradaEntrega,
-                StatusEntrega: 'Aguardando',
-                TipoPagamento: selectedPaymentMethod,
-
-            };
-            if (deliveryOption === 'Retirar no Local') {
-                dataToSave.EnderecoRetirada = enderecoRetirada;
-            } else {
-                dataToSave.EnderecoEntrega = userAddress;
-            }
-            await firestore()
-                .collection('usuarios')
-                .doc(userId)
-                .collection('pedidos')
-                .doc(prefId)
-                .set(dataToSave, { merge: true });
-        } catch (error) {
-            console.error('Erro ao salvar os detalhes do pedido:', error);
-        }
-    };
-
-    async function generateUniqueNumeroPedido() {
-        const ref = firestore().collection('metadata').doc('pedidoCounter');
-        // Usar uma transação para garantir atomicidade
-        const newCount = await firestore().runTransaction(async (transaction) => {
-            const doc = await transaction.get(ref);
-            // Se o documento existe e tem um campo 'count', incremente-o. Caso contrário, comece de 10000
-            const nextCount = doc.exists && doc.data().count ? doc.data().count + 1 : 10000;
-            // Atualize o contador no documento
-            transaction.set(ref, { count: nextCount });
-            // Retorne o novo valor para ser usado como parte do número do pedido
-            return nextCount;
-        });
-        // Retorne o número do pedido formatado
-        return `PM${newCount}`;
-    }
-
-    const handleConfirm = async (userId) => {
-        try {
-            const numeroPedido = await generateUniqueNumeroPedido();
-            let dataToSave = {
-                ValorTotal: valorTotalComTaxa,
-                numpedido: numeroPedido,
-                itemsDoPedido: orderItems,
-                NomeDoUsuario: nameUid,
-                Nome_2: nameUsuario,
-                status: 'Na entrega',
-                RetiradaEntrega: retiradaEntrega,
-                StatusEntrega: 'Aguardando',
-                TipoPagamento: selectedPaymentMethod,
-            };
-
-            if (retiradaEntrega === 'Retirar no Local') {
-                dataToSave.EnderecoRetirada = enderecoRetirada;
-            } else {
-                dataToSave.EnderecoEntrega = userAddress;
-            }
-
-            const docRef = await firestore()
-                .collection('usuarios')
-                .doc(userId)
-                .collection('pedidosMoney')
-                .add(dataToSave);
-
-            console.log('Pedido salvo com sucesso! ID do documento:', docRef.id);
-
-            // Aqui você armazena o ID do documento na variável `prefId` como mencionado
-            let prefId = docRef.id;
-
-            // Agora você pode usar `prefId` para outras operações, como navegação ou lógica de negócios
-            // Por exemplo, se precisar navegar para outra tela e passar este ID:
-            navigation.navigate('PayTroco', { prefId });
-
-        } catch (error) {
-            console.error('Erro ao salvar os detalhes do pedido:', error);
-        }
-    };
-
-
     return (
         <View className="bg-white flex-1 mt-10 rounded-2xl">
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
             {/* Botão de Voltar */}
             <View className=" z-40 relative py-4 "
                 style={{
@@ -465,9 +378,9 @@ export default function Pay() {
                             Sair
                         </Text>
                     </TouchableOpacity>
-                    <WebView
-                        source={{ uri: paymentUrl }}
-                        style={{ flex: 1 }}
+                    <WebView 
+                    source={{ uri: paymentUrl }} 
+                    style={{ flex: 1 }} 
                     />
 
                 </Modal>
@@ -490,6 +403,81 @@ export default function Pay() {
                             <Text className="text-xs text-center text-red-500">
                                 Você precisa selecionar um meio de pagamento!
                             </Text>
+                        </View>
+                    </TouchableOpacity>
+                </Modal>
+
+                <Modal
+                    visible={showChangeModal}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowChangeModal(false)}
+                >
+                    <TouchableOpacity
+                        className="flex items-center justify-center h-full"
+                        activeOpacity={1}
+                        onPressOut={() => setShowChangeModal(false)}
+                    >
+                        <View
+                            className="py-2 px-6 -mt-[30%] rounded-xl"
+                            style={{
+                                backgroundColor: themeColors.btPay,
+                                borderColor: themeColors.bgColor(0.1),
+                            }}
+                        >
+                            <Text className="text-lg font-bold">VOCÊ PRECISA DE TROCO ?</Text>
+                            <View className="flex flex-row items-center justify-center mt-4">
+                                <TouchableOpacity
+                                    className="rounded-2xl p-2 mr-3"
+                                    style={{
+                                        backgroundColor: themeColors.bgColor(1),
+                                    }}
+                                    onPress={() => { setNeedsChange(true); }}>
+                                    <Text className="text-white text-center font-bold text-lg">
+                                        SIM
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    className="rounded-2xl p-2"
+                                    style={{
+                                        backgroundColor: themeColors.bgColor(1),
+                                    }}
+                                    onPress={() => {
+                                        setNeedsChange(false);
+                                        setChangeNeeded('NÃO PRECISO DE TROCO');
+                                        setChangeAmount('')
+                                        setShowChangeModal(false);
+                                    }}>
+                                    <Text className="text-white text-center font-bold text-lg">
+                                        NÃO
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {needsChange && (
+                                <>
+                                    <TextInput
+                                        className="bg-white text-center my-3 text-lg p-2 rounded-lg"
+                                        onChangeText={setChangeAmount}
+                                        value={changeAmount}
+                                        placeholder="TROCO PRA QUANTO ?"
+                                        keyboardType="numeric"
+                                    />
+                                    <TouchableOpacity
+                                        className="rounded-2xl p-2"
+                                        style={{
+                                            backgroundColor: themeColors.bgColor(1),
+                                        }}
+                                        onPress={() => { setChangeNeeded(`TROCO PARA ${changeAmount}`); setShowChangeModal(false); }}
+
+                                    >
+                                        <Text className="text-white text-center font-bold text-lg">
+                                            OK
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
                         </View>
                     </TouchableOpacity>
                 </Modal>
@@ -520,12 +508,196 @@ export default function Pay() {
                 </Modal>
 
                 {/* Modal para edição de endereço */}
-                <AddressModal
-                    isVisible={editModalVisible}
-                    onClose={() => setEditModalVisible(false)} // Certifique-se de que isso está sendo passado corretamente
-                    onUpdateAddress={handleUpdateAddress}
-                    showWhatsAppInput={false}
-                />
+
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={editModalVisible}
+                    onRequestClose={() => {
+                        setEditModalVisible(!editModalVisible);
+                    }}
+                >
+                    <View className="bg-white p-4 rounded-2xl m-6 mt-28 border-4"
+                        style={{
+                            borderColor: themeColors.bgColor(0.3),
+                        }}
+                    >
+                        <TouchableOpacity
+                            onPress={() => setEditModalVisible(false)}
+                            style={{
+                                backgroundColor: themeColors.bgColor(1),
+                                shadowRadius: 7,
+                                shadowColor: themeColors.bgColor(1),
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 0,
+                                },
+                                shadowOpacity: 0.44,
+                                shadowRadius: 10.32,
+                                elevation: 13,
+                            }}
+                            className="absolute z-10 rounded-full p-3  top-2 right-5"// Estilizações adicionais se necessárias
+                        >
+                            <Icon.X strokeWidth={3} stroke="white" width={15} height={15} />
+                        </TouchableOpacity>
+
+                        <Text className="text-center font-bold text-xl">
+                            Atualizar Endereço
+                        </Text>
+                        <View className="mt-3 rounded-lg border"
+                            style={{
+                                borderColor: themeColors.bgColor(0.3),
+                            }}
+                        >
+                            <Controller
+                                control={control}
+                                render={({ field: { onChange, value } }) => (
+                                    <Picker
+                                        selectedValue={value}
+                                        onValueChange={(itemValue) => onChange(itemValue)}
+                                    >
+                                        <Picker.Item label="Sagres" value="Sagres" />
+                                    </Picker>
+                                )}
+                                name="cidade"
+                                rules={{ required: true }}
+                            />
+                        </View>
+                        {/* Inputs para o novo endereço. Exemplo para a rua: */}
+                        <Controller
+                            control={control}
+                            rules={{
+                                required: 'Rua é obrigatória',
+                                minLength: {
+                                    value: 3,
+                                    message: 'Rua deve ter no mínimo 3 caracteres'
+                                },
+                                pattern: {
+                                    value: /^[A-Za-z0-9\s]{3,}$/,
+                                    message: 'Rua deve conter letras e números'
+                                }
+                            }}
+
+                            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                                <View>
+                                    <TextInput
+                                        className="mt-3 h-12 p-2 rounded-lg border"
+                                        style={{
+                                            borderColor: themeColors.bgColor(0.3),
+                                        }}
+                                        onBlur={onBlur}
+                                        onChangeText={text => setNewAddress({ ...newAddress, Rua: text })}
+                                        value={value}
+                                        placeholder="Rua"
+                                    />
+                                    {error && <Text className="text-red-600 -mt-3 mb-3 bg-white">{error.message}</Text>}
+                                </View>
+                            )}
+                            name="rua"
+                        />
+
+                        <Controller
+                            control={control}
+                            rules={{
+                                required: 'Número é obrigatório',
+                                minLength: {
+                                    value: 1,
+                                    message: 'Número deve ter no mínimo 1 caractere'
+                                },
+                                pattern: {
+                                    value: /^\d+$/,
+                                    message: 'Número deve conter apenas números'
+                                }
+                            }}
+                            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                                <View>
+                                    <TextInput
+                                        className="mt-3 h-12 p-2 rounded-lg border"
+                                        style={{
+                                            borderColor: themeColors.bgColor(0.3),
+                                        }}
+                                        onBlur={onBlur}
+                                        onChangeText={text => setNewAddress({ ...newAddress, Numero: text })}
+                                        value={value}
+                                        placeholder="Numero"
+                                        keyboardType="numeric" // Isso assegura que o teclado numérico seja mostrado
+                                    />
+                                    {error && <Text className="text-red-600 -mt-3 mb-3 bg-white">{error.message}</Text>}
+                                </View>
+                            )}
+                            name="numero"
+                        />
+
+                        <Controller
+                            control={control}
+                            rules={{
+                                required: 'Bairro é obrigatório',
+                                minLength: {
+                                    value: 2,
+                                    message: 'Bairro deve ter no mínimo 2 caracteres'
+                                },
+                                pattern: {
+
+                                }
+                            }}
+                            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                                <View>
+                                    <TextInput
+                                        className="mt-3 h-12 p-2 rounded-lg border"
+                                        style={{
+                                            borderColor: themeColors.bgColor(0.3),
+                                        }}
+                                        onBlur={onBlur}
+                                        onChangeText={text => setNewAddress({ ...newAddress, Bairro: text })}
+                                        value={value}
+                                        placeholder="Bairro"
+                                    />
+                                    {error && <Text className="text-red-600 -mt-3 mb-3 bg-white">{error.message}</Text>}
+                                </View>
+                            )}
+                            name="bairro"
+                        />
+
+                        <Controller
+                            control={control}
+                            rules={{
+                                maxLength: {
+                                    value: 25,
+                                    message: 'Ponto de referência deve ter no máximo 25 caracteres'
+                                }
+                            }}
+                            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                                <View>
+                                    <TextInput
+                                        className="mt-3 h-12 p-2 rounded-lg border"
+                                        style={{
+                                            borderColor: themeColors.bgColor(0.3),
+                                        }}
+                                        onBlur={onBlur}
+                                        onChangeText={(text) => {
+                                            setNewAddress({ ...newAddress, PontoReferencia: text });
+                                            onChange(text);
+                                        }}
+                                        value={value}
+                                        placeholder="Ponto de referência (Opcional)"
+                                    />
+                                    {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
+                                </View>
+                            )}
+                            name="pontoReferencia"
+                        />
+                        <TouchableOpacity
+                            onPress={handleSubmit(handleSaveChanges)}
+                            style={{ backgroundColor: themeColors.bgColor(1) }}
+                            className="p-3 rounded-full mt-4"
+                        >
+                            <Text className="text-white text-center font-bold text-lg">
+                                Salvar
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
+
 
                 {/* Meios de Pagamento*/}
                 <View className="flex justify-center items-center h-[80%]"
@@ -619,13 +791,13 @@ export default function Pay() {
                 </View>
                 <View className="flex-row justify-between">
                     <Text className="text-gray-700 font-extrabold">Total do Pedido</Text>
-                    <Text className="text-gray-700 font-extrabold">R${valorTotalComTaxa}</Text>
+                    <Text className="text-gray-700 font-extrabold">R${totalOrderValue + taxaCartaoFor}</Text>
                 </View>
                 <View>
                     <TouchableOpacity
                         onPress={() => {
                             if (selectedPaymentMethod === 'Dinheiro') {
-                                handleConfirm(user.uid);
+                                handleConfirm();
                             } else {
                                 handlePaymentButtonClick();
                             }

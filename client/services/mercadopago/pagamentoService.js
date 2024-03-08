@@ -1,23 +1,25 @@
 import { ACCESS_TOKEN } from "../../config.json"
 
-export const handleIntegrationMP = async (selectedPaymentMethod) => {
 
+export const handleIntegrationMP = async (selectedPaymentMethod,  valorTotal, title, descricao, categoria, userId)  => {
   const preferencia = {
     "items": [
       {
-        "title": "name",
-        "description": "Compra de celular",
-        "picture_url": "imagen",
-        "category_id": "cells",
+        "title": title,
+        "description": descricao,
+        "category_id": categoria,
         "quantity": 1,
         "currency_id": "BRL",
-        "unit_price": 1
+        "unit_price": valorTotal
       }
     ],
-    "external_reference": "Zj4pvx7MmwOl4Q4MujzG8uGsXdy2",
+    "external_reference": userId,
     "notification_url": "https://southamerica-east1-food-delivery-app-413414.cloudfunctions.net/mercadoPagoIPNAppGeladinho",
     "payment_methods": {
-      "excluded_payment_methods": [], // Inicia vazio a seleção é feita pelo usuaio
+      "excluded_payment_methods": [
+        {"id": "bolbradesco"},
+        {"id": "pec"} 
+      ],
       "excluded_payment_types": [
         { "id": "debit_card" }
       ],
@@ -26,10 +28,11 @@ export const handleIntegrationMP = async (selectedPaymentMethod) => {
   };
 
   if (selectedPaymentMethod === 'Pix') {
-    preferencia.payment_methods.excluded_payment_types = [{ "id": "credit_card" }, { "id": "debit_card" }, { "id": "ticket" }];
+    preferencia.payment_methods.excluded_payment_types = [
+      {"id": "credit_card"}, {"id": "debit_card"}, {"id": "ticket"}
+    ];
   } else if (selectedPaymentMethod === 'Cartão de Crédito') {
-    preferencia.payment_methods.excluded_payment_methods = [{ "id": "pix" }];
-
+    preferencia.payment_methods.excluded_payment_methods.push({"id": "pix"});
   }
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
