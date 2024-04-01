@@ -1,49 +1,49 @@
 {
   "project_info": {
-    "project_number": "259606439469",
-    "project_id": "food-delivery-app-671e2",
-    "storage_bucket": "food-delivery-app-671e2.appspot.com"
+    "project_number": "216264872510",
+    "project_id": "food-delivery-app-413414",
+    "storage_bucket": "food-delivery-app-413414.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:259606439469:android:6842f73cdebd73b3b3faa4",
+        "mobilesdk_app_id": "1:216264872510:android:effa3c931403d3935fb76f",
         "android_client_info": {
           "package_name": "com.lucasccgomes.client"
         }
       },
       "oauth_client": [
         {
-          "client_id": "259606439469-sslrgc3br97tirl7123lu1bu1q0h6f5k.apps.googleusercontent.com",
+          "client_id": "216264872510-dnjb112qb2pb09ad45nmj7r0gndcvuef.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.lucasccgomes.client",
-            "certificate_hash": "8d10b6a8e2745756f2c5749587e5d1edc737739e"
+            "certificate_hash": "5d2be2fbc53a0a28597fca855c0cf0f9ef24955e"
           }
         },
         {
-          "client_id": "259606439469-v5g3ujkavjt4t2hemrhg8bmta8o84406.apps.googleusercontent.com",
+          "client_id": "216264872510-r85pb5nrv6jkb1sa8p34bsefpflk6e92.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.lucasccgomes.client",
-            "certificate_hash": "548bf3a67bd34eb64b950879491beaca85e365d0"
+            "certificate_hash": "26a26c743bb88092566d92d41651e1f6cf1f648a"
           }
         },
         {
-          "client_id": "259606439469-qunge51ehl01u8t3rosvhgh7fdgg3ujl.apps.googleusercontent.com",
+          "client_id": "216264872510-sd38c2d73hlkdus13591s1ql05vpigoe.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDn9JeGuyEZTCbi2whl_DunboD-09ohU1A"
+          "current_key": "AIzaSyDXw2ORxaviVQ2NtowNKXqPRCJIzAjyZEc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "259606439469-qunge51ehl01u8t3rosvhgh7fdgg3ujl.apps.googleusercontent.com",
+              "client_id": "216264872510-sd38c2d73hlkdus13591s1ql05vpigoe.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

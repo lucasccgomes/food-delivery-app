@@ -17,12 +17,14 @@ const AddInfo = ({ navigation }) => {
   const { control, handleSubmit, formState: { errors }, setValue } = useForm();
 
   useEffect(() => {
-    const docRef = firestore().collection('admin').doc('carol');
+    const docRef = firestore()
+    .collection('admin')
+    .doc('carol');
     const unsubscribe = docRef.onSnapshot(doc => {
       if (doc.exists) {
         const data = doc.data();
         setLogoUrl(data.urlLogo);
-        setCidades([data.cidades.cidade]);
+        setCidades(data.cidades);
       } else {
         console.log('Documento não encontrado');
       }
@@ -75,7 +77,6 @@ const AddInfo = ({ navigation }) => {
       Alert.alert('Erro', 'Erro ao adicionar endereço. Tente novamente.');
     }
   };
-
 
   const formatWhatsApp = (value) => {
     const numbers = value.replace(/\D/g, '');
@@ -169,10 +170,9 @@ const AddInfo = ({ navigation }) => {
                     selectedValue={value}
                     onValueChange={(itemValue, itemIndex) => onChange(itemValue)}
                   >
-                    {/* Supondo que cada cidade é um objeto com uma propriedade 'nome' */}
-                    {cidades.map((nomeCidade, index) => (
-                      <Picker.Item key={index} label={nomeCidade} value={nomeCidade} />
-                    ))}
+                   {cidades.map((cidade, index) => (
+    <Picker.Item key={index} label={cidade} value={cidade} />
+  ))}
                   </Picker>
                   {error && <Text className="text-red-600 -mt-3 mb-3">{error.message}</Text>}
                 </View>
@@ -190,8 +190,8 @@ const AddInfo = ({ navigation }) => {
                   message: 'Rua deve ter no mínimo 3 caracteres'
                 },
                 pattern: {
-                  value: /^[A-Za-z0-9\s]{3,}$/,
-                  message: 'Rua deve conter letras e números'
+                  value: /^[A-Za-z0-9\sáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]+$/,
+                  message: 'Rua deve conter letras, números e acentos'
                 }
               }}
 

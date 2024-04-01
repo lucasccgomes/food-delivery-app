@@ -34,9 +34,10 @@ export default function Navigation() {
         if (doc.exists) {
           setUserExists(true);
           const enderecoEntrega = doc.data().EnderecoEntrega;
-          console.log("Endereço de entrega no documento:", !!enderecoEntrega);
-          setEnderecoEntregaExists(!!enderecoEntrega);
-          setIsLoading(false);
+          const enderecoEntregaExistsAndNotEmpty = enderecoEntrega && Object.keys(enderecoEntrega).length > 0;
+        console.log("Endereço de entrega no documento:", enderecoEntregaExistsAndNotEmpty);
+        setEnderecoEntregaExists(enderecoEntregaExistsAndNotEmpty);
+        setIsLoading(false);
         } else {
           // Documento do usuário não existe, então crie um com campos vazios
           console.log(`Criando documento para o usuário: ${user.uid}`);

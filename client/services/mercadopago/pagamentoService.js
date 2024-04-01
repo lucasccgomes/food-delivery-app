@@ -14,7 +14,7 @@ export const handleIntegrationMP = async (selectedPaymentMethod,  valorTotal, ti
       }
     ],
     "external_reference": userId,
-    "notification_url": "https://southamerica-east1-food-delivery-app-413414.cloudfunctions.net/mercadoPagoIPNAppGeladinho",
+    "notification_url": "https://southamerica-east1-food-delivery-app-413414.cloudfunctions.net/mercadoPagoIPNAppGeladinho-V2",
     "payment_methods": {
       "excluded_payment_methods": [
         {"id": "bolbradesco"},

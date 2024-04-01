@@ -1,4 +1,4 @@
-import { View, Text, StatusBar, TouchableOpacity } from 'react-native'
+import { View, Text, StatusBar, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react';
 import { BackHandler } from 'react-native';
 import { useRoute } from '@react-navigation/native';
@@ -6,6 +6,8 @@ import firestore from '@react-native-firebase/firestore';
 import { useUser } from '../context/UserContext';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
+
+const { width, height } = Dimensions.get('window');
 
 export default function PagamentoStatus({ navigation }) {
   const [pedidoInfo, setPedidoInfo] = useState(null);
@@ -66,6 +68,7 @@ export default function PagamentoStatus({ navigation }) {
             shadowOpacity: 0.44,
             shadowRadius: 10.32,
             elevation: 13,
+            top: width < 400 ? 55 : 0,
           }}
         >
           <TouchableOpacity
@@ -88,10 +91,14 @@ export default function PagamentoStatus({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <View className="flex justify-center items-center mt-10"
+        <View className="flex justify-center items-center "
+          style={{ marginTop: width < 400 ? -63 : 0, }}
         >
-          <View className="flex justify-center items-center h-24 w-24 rounded-full bg-green-600">
-            <Icon.Check strokeWidth={3} width={70} height={70} stroke="white" />
+          <View
+            style={{ display: width < 400 ? 'none' : 'flex', }}
+            className="flex justify-center items-center h-24 w-24 rounded-full bg-green-600">
+            <Icon.Check
+              strokeWidth={3} width={70} height={70} stroke="white" />
           </View>
           <Text className="text-2xl font-bold mt-7">Informações do Pedido</Text>
           {pedidoInfo ? (
@@ -143,12 +150,16 @@ export default function PagamentoStatus({ navigation }) {
                   {pedidoInfo && pedidoInfo.itemsDoPedido && (
                     <View className="flex flex-col mt-2">
                       <Text className="font-bold text-center text-xl mb-2">Pedido</Text>
-                      {pedidoInfo.itemsDoPedido.map((item, index) => (
-                        <View key={index} className="flex flex-row justify-between ">
-                          <Text className="mr-4">{item.title}</Text>
-                          <Text><Text className="font-bold">Qtd: </Text>{`${item.quantity}`}</Text>
-                        </View>
-                      ))}
+
+                      <ScrollView style={{ maxHeight: width < 400 ? 75 : 100 }}>
+                        {pedidoInfo.itemsDoPedido.map((item, index) => (
+                          <View key={index} className="flex flex-row justify-between ">
+                            <Text className="mr-4">{item.title}</Text>
+                            <Text><Text className="font-bold">Qtd: </Text>{`${item.quantity}`}</Text>
+                          </View>
+                        ))}
+                      </ScrollView>
+
                     </View>
                   )}
 
@@ -158,7 +169,7 @@ export default function PagamentoStatus({ navigation }) {
                   </View>
 
                   <View className="flex flex-col mt-8 p-2 rounded-xl"
-                    style={{ backgroundColor: themeColors.bgColor(0.5) }}
+                    style={{ marginTop: width < 400 ? 4 : 15, backgroundColor: themeColors.bgColor(0.5) }}
                   >
                     <Text className="font-bold text-center text-lg">Status do Pedido</Text>
                     <Text className="text-center">{pedidoInfo.StatusEntrega}</Text>
@@ -168,7 +179,11 @@ export default function PagamentoStatus({ navigation }) {
               {/* Adicione mais campos conforme necessário */}
             </>
           ) : (
-            <Text>Carregando informações do pedido...</Text>
+
+            <View className="flex justify-center items-center h-full">
+              <Image source={require('../assets/images/carregando_02.gif')} className="h-40 w-40" />
+            </View>
+
           )}
         </View>
       </View>

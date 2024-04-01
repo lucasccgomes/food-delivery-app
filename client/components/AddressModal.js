@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import * as Icon from "react-native-feather";
@@ -8,6 +8,7 @@ import { useUser } from '../context/UserContext';
 import firestore from '@react-native-firebase/firestore';
 
 const AddressModal = ({ isVisible, onClose, onUpdateAddress, showWhatsAppInput = true }) => {
+    const [cidades, setCidades] = useState([]);
     const { control, handleSubmit, setValue, formState: { errors } } = useForm({
         defaultValues: {
             cidade: '',
@@ -49,6 +50,22 @@ const AddressModal = ({ isVisible, onClose, onUpdateAddress, showWhatsAppInput =
             onClose();
         }
     };
+
+    useEffect(() => {
+        const docRef = firestore().collection('admin').doc('carol');
+        const unsubscribe = docRef.onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                setCidades(data.cidades);
+            } else {
+                console.log('Documento não encontrado');
+            }
+        }, error => {
+            console.error('Erro ao obter as cidades:', error);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (user && user.uid) {
@@ -117,10 +134,13 @@ const AddressModal = ({ isVisible, onClose, onUpdateAddress, showWhatsAppInput =
                         control={control}
                         render={({ field: { onChange, value } }) => (
                             <Picker
+                                className="bg-white rounded-lg"
                                 selectedValue={value}
-                                onValueChange={(itemValue) => onChange(itemValue)}
+                                onValueChange={(itemValue, itemIndex) => onChange(itemValue)}
                             >
-                                <Picker.Item label="Sagres" value="Sagres" />
+                                {cidades.map((cidade, index) => (
+                                    <Picker.Item key={index} label={cidade} value={cidade} />
+                                ))}
                             </Picker>
                         )}
                         name="cidade"
@@ -137,8 +157,8 @@ const AddressModal = ({ isVisible, onClose, onUpdateAddress, showWhatsAppInput =
                             message: 'Rua deve ter no mínimo 3 caracteres'
                         },
                         pattern: {
-                            value: /^[A-Za-z0-9\s]{3,}$/,
-                            message: 'Rua deve conter letras e números'
+                            value: /^[A-Za-z0-9\sáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]+$/,
+                            message: 'Rua deve conter letras, números e acentos'
                         }
                     }}
 

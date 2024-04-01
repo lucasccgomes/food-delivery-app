@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput, Dimensions, StatusBar } from 'react-native'
+import { View, Text, TouchableOpacity, Image, ScrollView, Modal, Alert, Dimensions, StatusBar } from 'react-native'
 import React, { useEffect, useState } from 'react';
 import * as Icon from "react-native-feather";
 import { themeColors } from '../theme';
@@ -30,11 +30,7 @@ export default function Pay() {
     const [taxaCartao, setTaxaCartao] = useState(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [showWarningModal, setShowWarningModal] = useState(false);
-    const [showChangeModal, setShowChangeModal] = useState(false);
-    const [showSelectChangeModal, setShowSelectChangeModal] = useState(false);
     const [changeAmount, setChangeAmount] = useState('');
-    const [needsChange, setNeedsChange] = useState(false);
     const [changeNeeded, setChangeNeeded] = useState('');
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [userAddress, setUserAddress] = useState('');
@@ -79,12 +75,13 @@ export default function Pay() {
                 .onSnapshot(docSnapshot => {
                     if (docSnapshot.exists) {
                         const data = docSnapshot.data();
-                        setNameUid(data.NomeDoUsuario);  // Armazenando o nome completo do usuário
+                        setNameUid(data.NomeDoUsuario);
                         setNameUsuario(data.Nome_2);
                         setRetiradaEntrega(data.RetiradaEntrega)
                         const items = data.itemsDoPedido.map(item => ({
                             quantity: item.quantity,
                             title: item.title,
+                            _id: item._id,
                             unit_price: item.unit_price
                         }));
                         setOrderItems(items);
@@ -130,18 +127,28 @@ export default function Pay() {
                 if (docSnapshot.exists) {
                     const data = docSnapshot.data();
                     setAddress(
-                        <Text>
-                            <Text className="font-bold">Retirada:</Text> {data.EnderecoRetirada}
-                        </Text>
+                        <View className="flex justify-center items-center ">
+                            <Text className="font-bold">
+                                Retirada
+                            </Text>
+                            <Text className="text-center">
+                                {data.EnderecoRetirada}
+                            </Text>
+                        </View>
                     );
                 }
             } else {
                 if (userInfo && userInfo.EnderecoEntrega) {
                     const { Rua, Numero, Bairro, Cidade } = userInfo.EnderecoEntrega;
                     setAddress(
-                        <Text>
-                            <Text className="font-bold">Entrega:</Text> {userInfo && userInfo.EnderecoEntrega ? `${userInfo.EnderecoEntrega.Rua}, ${userInfo.EnderecoEntrega.Numero}, ${userInfo.EnderecoEntrega.Bairro}, ${userInfo.EnderecoEntrega.Cidade}` : 'Carregando endereço...'}
-                        </Text>
+                        <View className="flex justify-center items-center ">
+                            <Text className="font-bold text-center">
+                                Entrega
+                            </Text>
+                            <Text className="text-center">
+                                {userInfo && userInfo.EnderecoEntrega ? `${userInfo.EnderecoEntrega.Rua}, ${userInfo.EnderecoEntrega.Numero}, ${userInfo.EnderecoEntrega.Bairro}, ${userInfo.EnderecoEntrega.Cidade}` : 'Carregando endereço...'}
+                            </Text>
+                        </View>
                     );
                 }
             }
@@ -177,7 +184,7 @@ export default function Pay() {
         }
     };
 
-    const waitAndCheckPaymentStatus = async (userId, prefId, totalOrderValue, taxaCartaoFor, maxWaitTime = 120000, interval = 2000) => {
+    const waitAndCheckPaymentStatus = async (userId, prefId, totalOrderValue, taxaCartaoFor, maxWaitTime = 600000, interval = 4000) => {
         const startTime = Date.now();
         while (Date.now() - startTime < maxWaitTime) {
             const status = await checkPaymentStatus(userId, prefId);
@@ -193,8 +200,6 @@ export default function Pay() {
         return null; // Retorna null se o pagamento não for aprovado dentro do tempo máximo
     };
 
-
-
     useEffect(() => {
         if (selectedPaymentMethod !== 'Dinheiro') {
             setChangeNeeded('');
@@ -203,12 +208,28 @@ export default function Pay() {
     }, [selectedPaymentMethod]);
 
     useEffect(() => {
+        const fetchTaxaCartao = async () => {
+            try {
+                const docRef = firestore().collection('admin').doc('carol');
+                const docSnapshot = await docRef.get();
+                if (docSnapshot.exists) {
+                    const data = docSnapshot.data();
+                    setTaxaCartao((data.porcentagemCartao / 100) * totalOrderValue);
+                } else {
+                    console.log("Documento não encontrado no Firestore");
+                }
+            } catch (error) {
+                console.error("Erro ao buscar a taxa do cartão no Firestore:", error);
+            }
+        };
+    
         if (selectedPaymentMethod === 'Cartão de Crédito') {
-            setTaxaCartao((5 / 100) * totalOrderValue);
+            fetchTaxaCartao();
         } else {
             setTaxaCartao(0);
         }
     }, [selectedPaymentMethod, totalOrderValue]);
+    
 
     const taxaCartaoFor = parseFloat(taxaCartao.toFixed(2));
 
@@ -231,46 +252,69 @@ export default function Pay() {
 
     const handleBuy = async (selectedPaymentMethod, setPaymentUrl, setIsModalVisible, navigation, userId) => {
         if (!selectedPaymentMethod) {
-            setShowWarningModal(true); // Mostra o modal de aviso
         } else {
             const url = await handleIntegrationMP(selectedPaymentMethod, valorTotalComTaxa, paymentDetails.title, paymentDetails.description, paymentDetails.categoria, userId);
             if (url) {
                 setPaymentUrl(url);
                 setIsModalVisible(true);
 
-                // Extrair o pref_id da URL
                 const prefId = extractPrefIdFromUrl(url);
 
                 if (prefId) {
-                    // Esperar e verificar o status do pagamento
                     const paymentStatus = await waitAndCheckPaymentStatus(userId, prefId);
                     setIsModalVisible(false);
                     console.log('Tentando navegar para PagamentoStatus', paymentStatus);
                     if (paymentStatus === 'approved') {
+                        await updateStock(orderItems);
                         navigation.reset({
                             index: 0,
                             routes: [{ name: 'PagamentoStatus', params: { prefId } }],
                         });
-                        // Navegar para a tela de pagamento aprovado
                         dispatch(emptyCart());
                     } else {
-                        // O pagamento não foi aprovado dentro do tempo máximo ou erro na verificação
                         console.log('Pagamento não aprovado ou erro na verificação.');
-                        // Considerar adicionar feedback ao usuário aqui
                     }
                 } else {
                     console.log('Não foi possível extrair o pref_id da URL.');
-                    // Feedback ao usuário sobre o erro
                 }
             } else {
-                // Feedback ao usuário sobre o erro na obtenção da URL
             }
+        }
+    };
+
+    const updateStock = async (orderItems) => {
+        const batch = firestore().batch();
+
+        orderItems.forEach((item) => {
+            const itemRef = firestore()
+                .collection('admin')
+                .doc('carol')
+                .collection('GerenciaEstoque')
+                .doc(item._id); // Aqui usamos o _id que vem dos orderItems
+
+            // Este comando decrementará a quantidade em estoque
+            batch.update(itemRef, {
+                qtdEstoque: firestore.FieldValue.increment(-item.quantity)
+            });
+        });
+
+        try {
+            await batch.commit();
+            console.log('Estoque atualizado com sucesso.');
+        } catch (error) {
+            console.error('Erro ao atualizar o estoque:', error);
         }
     };
 
     const handlePaymentButtonClick = () => {
         if (!selectedPaymentMethod) {
-            setShowWarningModal(true); // Mostra o modal de aviso
+            Alert.alert(
+                "Aviso", // Título do alerta
+                "Você precisa selecionar um meio de pagamento!", // Mensagem do alerta
+                [
+                    { text: "OK" } // Botão para fechar o alerta
+                ]
+            );
         } else {
             handleBuy(selectedPaymentMethod, setPaymentUrl, setIsModalVisible, navigation, user.uid);
         }
@@ -284,6 +328,7 @@ export default function Pay() {
     };
 
     const valorTotalComTaxa = totalOrderValue + taxaCartaoFor;
+
     const saveTotalValueIfPaymentApproved = async (userId, prefId) => {
         try {
             let dataToSave = {
@@ -294,6 +339,9 @@ export default function Pay() {
                 RetiradaEntrega: retiradaEntrega,
                 StatusEntrega: 'Aguardando',
                 TipoPagamento: selectedPaymentMethod,
+                userId: userId,
+                collection: 'pedidos',
+                timestamp: firestore.FieldValue.serverTimestamp(),
 
             };
             if (deliveryOption === 'Retirar no Local') {
@@ -341,6 +389,9 @@ export default function Pay() {
                 RetiradaEntrega: retiradaEntrega,
                 StatusEntrega: 'Aguardando',
                 TipoPagamento: selectedPaymentMethod,
+                userId: userId,
+                collection: 'pedidosMoney',
+                timestamp: firestore.FieldValue.serverTimestamp(),
             };
 
             if (retiradaEntrega === 'Retirar no Local') {
@@ -348,7 +399,6 @@ export default function Pay() {
             } else {
                 dataToSave.EnderecoEntrega = userAddress;
             }
-
             const docRef = await firestore()
                 .collection('usuarios')
                 .doc(userId)
@@ -356,19 +406,15 @@ export default function Pay() {
                 .add(dataToSave);
 
             console.log('Pedido salvo com sucesso! ID do documento:', docRef.id);
-
-            // Aqui você armazena o ID do documento na variável `prefId` como mencionado
             let prefId = docRef.id;
 
-            // Agora você pode usar `prefId` para outras operações, como navegação ou lógica de negócios
-            // Por exemplo, se precisar navegar para outra tela e passar este ID:
-            navigation.navigate('PayTroco', { prefId });
+            navigation.navigate('PayTroco', { prefId, orderItems, valorTotalComTaxa });
 
         } catch (error) {
             console.error('Erro ao salvar os detalhes do pedido:', error);
         }
     };
-
+    console.log('itens do pedido', orderItems)
 
     return (
         <View className="bg-white flex-1 mt-10 rounded-2xl">
@@ -415,6 +461,7 @@ export default function Pay() {
 
                 </Text>
             </View>
+
             {/* Texto Selecione Meio de Pagamento*/}
             <View style={{ backgroundColor: themeColors.bgColor(0.2) }}
                 className="flex-row px-4 items-center"
@@ -422,7 +469,7 @@ export default function Pay() {
                 <Image
                     source={require('../assets/images/paymet.png')}
                     className="w-20 h-20 rounded-full my-1"
-                    style={{ width: width < 400 ? 50 : 70, height: width < 400 ? 50 : 70, }}
+                    style={{ width: width < 380 ? 50 : 70, height: width < 380 ? 50 : 70, }}
                 />
                 <Text className="flex-1 pl-4">
                     Selecione um meio de pagamento
@@ -438,7 +485,7 @@ export default function Pay() {
                     <TouchableOpacity
                         onPress={() => setEditModalVisible(true)}>
                         <Text
-                            className="font-bold mr-2"
+                            className="font-bold mr-3 pr-1"
                             style={{ color: themeColors.text }}>
                             Alterar
                         </Text>
@@ -456,67 +503,51 @@ export default function Pay() {
                         setIsModalVisible(!isModalVisible);
                     }}
                 >
-                    <TouchableOpacity
-                        onPress={() => setIsModalVisible(false)}
-                        style={{ backgroundColor: themeColors.bgColor(1) }}
-                        className="p-3 rounded-full mb-4 mx-3"
-                    >
-                        <Text className="text-white text-center font-bold text-lg">
-                            Sair
-                        </Text>
-                    </TouchableOpacity>
+                     <View className=" z-40 relative py-4"
+                style={{
+                    shadowRadius: 7,
+                    shadowColor: themeColors.bgColor(1),
+                    shadowOffset: {
+                        width: 0,
+                        height: 0,
+                    },
+                    shadowOpacity: 0.44,
+                    shadowRadius: 10.32,
+                    elevation: 13,
+                }}
+            >
+                <TouchableOpacity
+                  onPress={() => setIsModalVisible(false)}
+                    style={{
+                        backgroundColor: themeColors.bgColor(1),
+                        shadowRadius: 7,
+                        shadowColor: themeColors.bgColor(1),
+                        shadowOffset: {
+                            width: 0,
+                            height: 0,
+                        },
+                        shadowOpacity: 0.44,
+                        shadowRadius: 10.32,
+                        elevation: 13,
+                    }}
+                    className="absolute z-10 rounded-full p-3  top-5 left-8"
+                >
+                    <Icon.ArrowLeft strokeWidth={3} stroke="white" />
+                </TouchableOpacity>
+            </View>
+            <View className="-mt-2">
+                <Text className="text-center font-bold text-xl">
+                    Pagar
+                </Text>
+                <Text className="text-center text-gray-500">
+                  
+                </Text>
+            </View>
                     <WebView
                         source={{ uri: paymentUrl }}
                         style={{ flex: 1 }}
                     />
 
-                </Modal>
-
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={showWarningModal}
-                    onRequestClose={() => setShowWarningModal(false)}
-                >
-                    <TouchableOpacity className="h-full flex justify-center items-center"
-                        onPressOut={() => setShowWarningModal(false)} >
-                        <View
-                            className=" border w-[85%] -mb-[450px] rounded-xl p-2"
-                            style={{
-                                backgroundColor: themeColors.bgColor(0.2),
-                                borderColor: themeColors.bgColor(0.1),
-                            }}
-                        >
-                            <Text className="text-xs text-center text-red-500">
-                                Você precisa selecionar um meio de pagamento!
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </Modal>
-
-                <Modal
-                    visible={showSelectChangeModal}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setShowSelectChangeModal(false)}
-                >
-                    <TouchableOpacity
-                        className="h-full flex justify-center items-center"
-                        activeOpacity={1}
-                        onPressOut={() => setShowSelectChangeModal(false)}
-                    >
-                        <View
-                            className=" border w-[85%] -mb-[450px] rounded-xl p-2"
-                            style={{
-                                backgroundColor: themeColors.bgColor(0.2),
-                                borderColor: themeColors.bgColor(0.1),
-                            }}
-                        >
-                            <Text className="text-xs text-center text-red-500">
-                                É preciso informar se você precisa de troco!
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
                 </Modal>
 
                 {/* Modal para edição de endereço */}
@@ -529,7 +560,7 @@ export default function Pay() {
 
                 {/* Meios de Pagamento*/}
                 <View className="flex justify-center items-center h-[80%]"
-                    style={{ marginTop: width < 400 ? 20 : 30, }}
+                    style={{ marginTop: width < 380 ? 20 : 30, }}
                 >
                     <TouchableOpacity
                         onPress={() => setSelectedPaymentMethod('Pix')}
@@ -582,7 +613,7 @@ export default function Pay() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        onPress={() => { setShowChangeModal(true); setSelectedPaymentMethod('Dinheiro'); }}
+                        onPress={() => { setSelectedPaymentMethod('Dinheiro'); }}
                         className="flex-row items-center w-72 mt-2 space-x-3 py-2 px-4 bg-white rounded-3xl mx-2 mb-3 "
                         style={{
                             backgroundColor: selectedPaymentMethod === 'Dinheiro' ? themeColors.btPay : 'white',

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "food-delivery-app-671e2",
+  "private_key_id": "407b8eabbf99308be2e63df3c25167bad61c777b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDRtei4pPEdU9oC\n15iZBZ5xE67nHmwpfDLXXEZ2N6EazsM2L2B0YT+S4MJzi2csIfAJ+6vwhCx6WM1Z\nMvNLm5rjxao9wt5T/d+rgeoRuo3T4zHQYPUt/Z7BV+24yy9/4krM3LFBaxxb41CG\nfKKrSeO8ukDbuRuPnSwZMVchXe2g3YmTZbLh2JOd3fm84xMqq6hsSXt0AP6zkZrm\nwDoAIDHMJfuAJO7eRx9VL+MRLjVgv1O4Gex6KfWGP0IYZ41JCr6EAznKLGjFCpt4\nbGKPWONKgz++RfFOjq2cZAhBmDOEJpPvjdl3kTuAN10B+kgbJfqHkEofdf2SKdg1\ncsbIokHlAgMBAAECggEAV7FW0KeAgAAJYTjggdScrbJKaDELj8l0xSO7/0FB6CDf\n9q+XCPOFjxjXl1OK4CSM6M/J1Xif1MV/kTZCELLP8UE98Delmr/FoUVhKOq21gzi\nTr3MqN+uXDE1ohmtEjABkWsT4EQ3BqGmkaZaq3/pcIj+CCN+x+40e5BrW/OYI7Td\n13BBz8iIcDc6GZei4jc8dll7uAnEWyjC/AgDQ0ZfNk9QLDjY9UouO7g/YJGhDCYl\ng1h8LQ9kyQ3PAOkuOAO1JwcW3IwNLMP9XfvFx/RDr4NtSC+VNla6rPLnb3yVgvfD\na28goBIitcQZZEPW2wjPZz1/gWtgTknbAavO0jwU3QKBgQD3im0dTXuStTfDJqHv\nxAWXwmArKZHqLHqg59Z1fa1jtaFnNUxk13KSD1UwKaSi3xJguM03LFo0h0KqSwS3\nO76OKdJCtub+n8Cx413DDOMk+CGsHJJ1Fppkw0vjoaV1VonGJvL6ybIKDeRyP5ut\nMVIOLW0texdAjZN2mZqXpwoNXwKBgQDY4IgHJGA3BCwLQQkh45j9fWGx8yctEXGM\njebBx3mlz5yvT9pGZNmLajTVLfsEcfiPtA4UMDtBdq5shsEbokiecVY/XxiFzDxp\ntWeqyYTtMIIiHBVjaJ0quaLzvODTf9UltkWoSrv1p0gngLKXmS/dveKX7hykNdyR\ny8IPJWDzOwKBgGxzyHSDIvXW0ZR9k4tBnZWswoeGkfg//oYKrOoS4umBhTJ7pnmz\n7u1RLGiKhigZhaq8rKRUmTzUWf/UGD/TPBx69DTof3HlOf519/lh5w6ma9JFPmFw\nQrqM2e3kP2KWRIx9Og1oWsmO5pyrg6AwsJuniWLYwAo3PPlEOPfiZkQPAoGBAJUk\ny8cFl/kdsGBI6Eva5eIlMGMc0SsoHMtI5pEKabjCboENTBEu14ANmKmlxkMHUaUZ\ncLkndgiN4mOVxAUJ9CCp1mMcNZQFoOIdM1562SP4QPXOFFNZpQO1x78QfBhWh7E4\niOy0AFBuKqun0Kl6WjWGmOZchGvU8ot88UZTMTnzAoGBAMHz0NVZRVfV+DdJ9U7/\nw7/u0vG5gCRh6oAKQII3t03DD+kwJqMqaqjY23/EGxdtG0+8MXdwjvw83eq6R4Rq\nXxy29vqwrlYRqr3udyraqdDyADVdro5M2jMZLkwEIC4rkpgekLmf3ZJvdj+c8lab\nyJ39jiuI7oFsIWHT/PfSit6g\n-----END PRIVATE KEY-----\n",
+  "client_email": "app-doce-sabor@food-delivery-app-671e2.iam.gserviceaccount.com",
+  "client_id": "108751395975966527332",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/app-doce-sabor%40food-delivery-app-671e2.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

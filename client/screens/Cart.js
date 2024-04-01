@@ -21,6 +21,29 @@ export default function Cart() {
     const [groupedItems, setGroupedItems] = useState({});
     const dispatch = useDispatch();
     const [deliveryFee, setDeliveryFee] = useState('');
+    const [deliveryStatus, setDeliveryStatus] = useState('');
+
+    useEffect(() => {
+        const unsubscribe = firestore()
+            .collection('admin')
+            .doc('carol')
+            .onSnapshot(documentSnapshot => {
+                const data = documentSnapshot.data();
+                if (data && data.entrega) {
+                    setDeliveryStatus(data.entrega);
+                }
+            });
+
+        // Não se esqueça de descadastrar o ouvinte ao sair do componente
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (deliveryStatus === 'indisponivel') {
+            setDeliveryOption('Retirar no Local');
+            setDeliveryFee(0);
+        }
+    }, [deliveryStatus]);
 
     // Verifica se a lista de itens no carrinho está vazia
     useEffect(() => {
@@ -77,6 +100,7 @@ export default function Cart() {
         // Em seguida, mapeamos os itens agrupados para o formato desejado
         const itensAgrupados = Object.values(groupedItemsById).map(item => ({
             title: item.name,
+            _id: item._id,
             description: item.description,
             pictureurl: urlFor(item.image).url(),
             category_id: item._type,
@@ -156,7 +180,6 @@ export default function Cart() {
                 </Text>
             </View>
 
-
             {/*Tempo*/}
             <View style={{ backgroundColor: themeColors.bgColor(0.2) }}
                 className="flex-row px-4 items-center"
@@ -170,22 +193,24 @@ export default function Cart() {
                 <Text style={{ flex: 1, paddingLeft: 16 }}>
                     {deliveryOption === 'Entrega' ? 'Entrega em 20-30 minutos' : 'Retirar no Local'}
                 </Text>
-                <TouchableOpacity
-                    onPress={() => {
-                        if (deliveryOption === 'Entrega') {
-                            setDeliveryOption('Retirar no Local');
-                            setDeliveryFee(0);
-                        } else {
-                            setDeliveryOption('Entrega');
-                            setDeliveryFee(2); // Assumindo que 2 é a taxa de entrega padrão
-                        }
-                    }}>
-                    <Text
-                        className="font-bold "
-                        style={{ color: themeColors.text }}>
-                        Mudar
-                    </Text>
-                </TouchableOpacity>
+                {deliveryStatus !== 'indisponivel' && (
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (deliveryOption === 'Entrega') {
+                                setDeliveryOption('Retirar no Local');
+                                setDeliveryFee(0);
+                            } else {
+                                setDeliveryOption('Entrega');
+                                setDeliveryFee(2); // Assumindo que 2 é a taxa de entrega padrão
+                            }
+                        }}>
+                        <Text
+                            className="font-bold "
+                            style={{ color: themeColors.text }}>
+                            Mudar
+                        </Text>
+                    </TouchableOpacity>
+                )}
 
             </View>
 
